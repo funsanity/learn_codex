@@ -1,6 +1,6 @@
-# Codex Configuration 配置全景指南
+# Codex 全景指南：配置、自定义与开发者实践
 
-> 面向第一次配置 Codex 的用户：看完后应能找到配置入口、理解加载优先级，知道模型、权限、沙箱、网络、自定义、Skills、MCP 与子代理等配置的作用和操作流程。
+> 面向 Codex 新手与开发者：从基础配置、权限与沙箱，到 `AGENTS.md`、Skills、MCP、Hooks、SDK、App Server 和 CI/CD，提供属性说明、操作流程与完整示例。
 >
 > 主入口：[OpenAI 官方 Configuration 文档](https://learn.chatgpt.com/docs/configuration)与 [Developers 文档](https://learn.chatgpt.com/docs/developers)。最后核对：2026-08-20。
 
