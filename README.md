@@ -2,7 +2,7 @@
 
 > 面向第一次配置 Codex 的用户：看完后应能找到配置入口、理解加载优先级，知道模型、权限、沙箱、网络、自定义、Skills、MCP 与子代理等配置的作用和操作流程。
 >
-> 主入口：[OpenAI 官方 Configuration 文档](https://learn.chatgpt.com/docs/configuration)。最后核对：2026-08-20。
+> 主入口：[OpenAI 官方 Configuration 文档](https://learn.chatgpt.com/docs/configuration)与 [Developers 文档](https://learn.chatgpt.com/docs/developers)。最后核对：2026-08-20。
 
 ## 阅读导航
 
@@ -14,6 +14,7 @@
 - 想让 Codex 更懂项目：阅读 `AGENTS.md`、Memories 和 Skills。
 - 想连接外部系统：阅读 Plugins 与 MCP。
 - 想并行处理任务：阅读 Subagents。
+- 想把 Codex 接入代码审查、CI、内部工具或团队协作：阅读“**Part III：Developers 开发者篇**”。
 - 配置不生效：阅读文末“**常见问题**”。
 
 ## Configuration 到底管什么？
@@ -1623,6 +1624,621 @@ codex
 
 如果 Skill 依赖 MCP，应在 `agents/openai.yaml` 的 `dependencies.tools` 中声明依赖。这样 Skill 负责流程，MCP 负责能力边界，子代理负责并行执行。
 
+## Part III：Developers 开发者篇
+
+> 官方入口：[Developers](https://learn.chatgpt.com/docs/developers)。这一篇回答的是：如何把 Codex 从“聊天里的编程助手”升级为开发流程、CI/CD、内部平台和团队工具的一部分。
+
+### 先看选型：我到底应该用哪个入口？
+
+这是开发者最容易混淆的地方。先按目标选入口，再看后面的具体操作。
+
+```text
+你想让 Codex 做什么？
+│
+├─ 在终端或脚本里完成一次任务
+│  └─ codex exec（非交互模式）
+│
+├─ 在 TypeScript / Python 程序中持续发起任务
+│  └─ Codex SDK
+│
+├─ 自己开发一套完整 Codex 客户端界面
+│  └─ App Server
+│
+├─ 让其他 Agent 把 Codex 当成一个专业工具调用
+│  └─ codex mcp-server
+│
+├─ 在 GitHub Actions 中审查、修复或验证代码
+│  └─ openai/codex-action
+│
+├─ 在 Codex 每次调用工具前后执行自定义检查
+│  └─ Hooks
+│
+└─ 让团队在 GitHub / Slack / Linear 中直接派活
+   └─ 对应的第三方集成
+```
+
+| 方案 | 最适合 | 调用方式 | 是否保留多轮线程 | 典型例子 |
+|---|---|---|---:|---|
+| 交互式 Codex | 人和 Codex 一起开发 | 桌面端、IDE、CLI | 是 | 写代码、调试、代码审查 |
+| `codex exec` | Shell、CI、定时任务 | 一条命令 | 可恢复 | 每晚扫描技术债 |
+| Codex SDK | 自己的 Node/Python 服务 | 程序 API | 是 | 内部研发机器人 |
+| App Server | 自己开发完整客户端 | JSON-RPC 流式协议 | 是 | 自定义桌面端或 IDE 插件 |
+| Codex MCP Server | 多 Agent 编排 | MCP 工具调用 | 是 | 主管 Agent 把编码任务交给 Codex |
+| GitHub Action | GitHub 工作流 | Workflow YAML | 单次任务为主 | PR 自动审查 |
+
+一句话记忆：**脚本用 `exec`，应用用 SDK，做客户端用 App Server，给其他 Agent 调用用 MCP Server，GitHub 自动化用 Action。**
+
+### 1. 开发工作流：代码审查与集成终端
+
+#### 1.1 使用 `/review` 审查代码
+
+在桌面端、IDE 扩展或 CLI 输入：
+
+```text
+/review
+```
+
+然后选择审查范围：
+
+- 当前未提交的变更：包含已暂存、未暂存和未跟踪文件，适合提交前自查。
+- 相对某个基础分支的变更：例如当前分支相对 `main` 的全部修改，适合 PR 前检查。
+- 某一个提交：适合定位一次提交引入的问题。
+- 自定义审查说明：例如“重点检查鉴权绕过、并发安全和数据库事务”。
+
+Codex 会启动专门的 reviewer，给出按优先级排列、可执行的发现；审查本身不会修改工作区。桌面端和 IDE 还可以选择把结果显示在代码行内，或作为独立任务显示。详细行为见 [Code review](https://learn.chatgpt.com/docs/code-review)。
+
+一个适合小白直接使用的审查提示词：
+
+```text
+请审查当前未提交的代码：
+1. 先找会导致程序错误、数据丢失或安全问题的缺陷。
+2. 再检查测试是否覆盖了失败路径和边界条件。
+3. 每个问题说明文件位置、触发条件、影响和建议修法。
+4. 不要直接修改代码，先给我审查报告。
+```
+
+团队可以把固定审查标准放进仓库的 `AGENTS.md`：
+
+```md
+## Code Review Rules
+
+- 所有数据库写入必须有失败路径测试。
+- 新增 API 必须验证鉴权和输入边界。
+- 不要把日志中的用户 Token、Cookie 或密码作为调试信息输出。
+```
+
+如果已安装并登录 GitHub CLI（`gh`），Codex 还能读取 PR 上下文。GitHub 集成中可以用 `@codex review` 请求云端审查。
+
+#### 1.2 集成终端怎样用
+
+桌面端每个聊天都有一个与当前项目或 worktree 对应的终端。点击右上角终端按钮，或按 `Ctrl+`` 打开。Codex 可以读取当前终端输出，因此你可以先运行命令，再让它解释失败原因。
+
+```bash
+git status
+npm test
+npm run lint
+```
+
+推荐流程：
+
+```text
+在终端运行测试
+      │
+      ├─ 成功 ──> 让 Codex 总结改动并准备提交说明
+      │
+      └─ 失败 ──> 把当前终端输出交给 Codex 分析
+                       │
+                       └─ 修复后重新运行同一命令
+```
+
+常用测试、启动、格式化命令还可以做成 Local Environment 的 Actions，在集成终端中一键运行。详见 [Integrated terminal](https://learn.chatgpt.com/docs/integrated-terminal)。
+
+### 2. 运行环境：Local、Worktree、Cloud 怎么选
+
+| 环境 | 代码在哪里运行 | 是否隔离当前工作区 | 适合场景 |
+|---|---|---:|---|
+| Local | 当前机器、当前项目目录 | 否 | 需要本机工具、立即查看修改 |
+| Worktree | 当前机器的独立 Git worktree | 是 | 并行任务、避免打乱当前分支 |
+| Cloud | OpenAI 配置的远程容器 | 是 | 后台运行、团队协作、GitHub/Slack/Linear 派活 |
+
+#### 2.1 Local Environment
+
+Local Environment 是桌面端的本地项目配置。它可以声明新 worktree 创建后需要自动执行的 setup script，也可以提供常用 Actions。配置会生成在项目的 `.codex` 目录中；不含秘密时，可以提交到 Git，让团队共用。详见 [Local environments](https://learn.chatgpt.com/docs/environments/local-environment)。
+
+适合放进 setup script 的内容：
+
+```bash
+npm ci
+npm run db:generate
+```
+
+不要把 API Key 直接写在脚本里；使用环境变量或团队的秘密管理方式。
+
+#### 2.2 Git worktree：并行开发不互相踩文件
+
+在桌面端新建任务时选择 **Worktree**，选定基础分支后提交任务。Codex 会在 `$CODEX_HOME/worktrees` 下创建独立工作区。它默认可能处于 detached HEAD，因此准备保留成果时，应创建分支，或使用 **Handoff to Local** 把聊天和代码带回本地工作区。
+
+```text
+main 工作区：你正在修线上 Bug
+│
+├─ worktree A：Codex 重构支付模块
+├─ worktree B：Codex 补 API 测试
+└─ worktree C：Codex 更新开发文档
+```
+
+注意：同一个 Git 分支不能同时检出到两个 worktree。Git 忽略的文件默认也不会复制；确实需要 `.env` 等本地文件时可使用 `.worktreeinclude`，但复制秘密文件会扩大泄露面，应只列最少文件。详见 [Git worktrees](https://learn.chatgpt.com/docs/environments/git-worktrees)。
+
+#### 2.3 Cloud Environment
+
+云端任务的大致流程：
+
+```text
+创建远程容器
+   ↓
+检出指定分支或提交
+   ↓
+运行 setup script（缓存恢复时可运行 maintenance script）
+   ↓
+Codex 修改代码并运行检查
+   ↓
+返回 diff，等待人工审查或创建 PR
+```
+
+几个容易踩坑的点：
+
+- setup script 与 Agent 阶段不是同一个 Bash 会话，脚本中的普通 `export` 不会自动保留；长期变量应通过环境设置或 shell 启动文件配置。
+- 环境变量在整个云端任务可用；Secrets 会加密保存，只在 setup 阶段提供，并在 Agent 阶段开始前移除。
+- setup 阶段可以联网；Agent 阶段默认关闭网络。只开放确有必要的域名和方法。
+- 依赖缓存最长可保留约 12 小时；修改 setup、maintenance、环境变量或 Secrets 会使缓存失效。
+- 固定 Node、Python 等运行时版本，避免“昨天能跑、今天镜像升级后失败”。
+
+详见 [Cloud environment](https://learn.chatgpt.com/docs/environments/cloud-environment) 和 [Environment modes](https://learn.chatgpt.com/docs/environments/modes)。
+
+### 3. Hooks：在 Agent 循环中插入团队检查
+
+Hooks 是在 Codex 生命周期事件发生时自动运行的脚本。它适合做日志、秘密扫描、命令校验、补充上下文，以及在危险工具调用前阻止执行。它不是 Skill：Skill 描述“如何完成一类任务”，Hook 则在指定事件发生时被强制触发。
+
+常见事件：
+
+| 事件 | 触发时机 | 常见用途 |
+|---|---|---|
+| `SessionStart` / `SessionEnd` | 会话开始或结束 | 初始化、审计 |
+| `UserPromptSubmit` | 用户提示提交后 | 补充项目上下文 |
+| `PreToolUse` | 工具执行前 | 拦截危险命令、改写参数 |
+| `PermissionRequest` | 请求权限时 | 接入审批策略 |
+| `PostToolUse` | 工具完成后 | 记录结果、执行校验 |
+| `PreCompact` / `PostCompact` | 上下文压缩前后 | 保存关键状态 |
+| `SubagentStart` / `SubagentStop` | 子代理开始或结束 | 追踪并行任务 |
+| `Stop` | Agent 准备结束 | 检查测试或交付条件 |
+
+最小配置结构如下。用户级文件可放在 `~/.codex/hooks.json`，项目级可放在 `.codex/hooks.json`；也可以写进对应 `config.toml`。项目 Hook 只有在项目受信任时才会运行。
+
+```json
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "ShellToolCall",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 .codex/hooks/check_shell.py"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+启用功能：
+
+```toml
+[features]
+hooks = true
+```
+
+Hook 通过标准输入收到 JSON，通过退出码和标准输出返回决定。下面是一个 `PreToolUse` 拒绝执行时的概念性响应：
+
+```json
+{
+  "hookSpecificOutput": {
+    "hookEventName": "PreToolUse",
+    "permissionDecision": "deny",
+    "permissionDecisionReason": "命令触及生产数据库，请改用只读环境"
+  }
+}
+```
+
+操作流程：
+
+1. 先用只记录、不阻止的 Hook 观察实际输入结构。
+2. 针对明确的工具类型设置 `matcher`，不要一开始匹配所有工具。
+3. 在 Codex 中运行 `/hooks` 检查并信任脚本的精确版本。
+4. 用一条允许的命令和一条应被拒绝的命令分别测试。
+5. 将 Hook 脚本和项目配置一起做代码审查。
+
+多个来源中匹配的 Hooks 都会运行；同一事件的匹配项可能并发执行。`PreToolUse` 能阻止或改写本地工具调用，但不应被当作唯一安全边界；`PostToolUse` 发生在副作用之后，不能撤销已经执行的操作。完整字段和事件见 [Hooks](https://learn.chatgpt.com/docs/hooks)。
+
+### 4. `codex exec`：脚本和 CI 的第一选择
+
+`codex exec` 是非交互模式：任务完成后把最终回答写到标准输出，过程事件写到标准错误，因此可以方便地被脚本接住。
+
+```bash
+codex exec "检查当前仓库的测试失败原因，只输出结论和建议"
+```
+
+默认使用只读沙箱。如果任务需要改文件，要明确开放工作区写权限：
+
+```bash
+codex exec --sandbox workspace-write \
+  "修复 lint 错误，运行 lint 验证，不要修改业务行为"
+```
+
+常用选项：
+
+| 目标 | 命令/选项 | 说明 |
+|---|---|---|
+| 不保存会话状态 | `--ephemeral` | 适合一次性 CI 任务 |
+| 机器读取事件 | `--json` | 输出 JSONL 事件流 |
+| 只保存最终回答 | `-o result.md` | 等同 `--output-last-message` |
+| 强制结构化结果 | `--output-schema schema.json` | 让程序按 JSON Schema 消费结果 |
+| 不读取用户配置 | `--ignore-user-config` | 提高 CI 可重复性 |
+| 不读取 Rules | `--ignore-rules` | 仅在工作流自己提供边界时使用 |
+| 恢复上次线程 | `codex exec resume --last "继续"` | 延续最近一次任务 |
+
+结构化结果示例：
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "summary": { "type": "string" },
+    "risk": { "type": "string", "enum": ["low", "medium", "high"] },
+    "tests_passed": { "type": "boolean" }
+  },
+  "required": ["summary", "risk", "tests_passed"],
+  "additionalProperties": false
+}
+```
+
+```bash
+codex exec \
+  --sandbox read-only \
+  --output-schema schema.json \
+  -o review.json \
+  "审查当前改动并按指定结构返回结果"
+```
+
+安全提醒：自动化环境应使用最小沙箱；只有确认目录安全时才用 `--skip-git-repo-check`。`CODEX_API_KEY` 可用于 `codex exec`，但不要把 Secret 设置成运行仓库不受信任代码的整个 Job 的全局环境变量。详见 [Non-interactive mode](https://learn.chatgpt.com/docs/non-interactive-mode)。
+
+### 5. Codex SDK：把 Codex 放进自己的程序
+
+SDK 适合服务端程序、内部工具和 CI 平台。它提供 thread，使应用可以继续同一次对话，而不是每次从零开始。
+
+#### TypeScript
+
+要求 Node.js 18 或更高版本：
+
+```bash
+npm install @openai/codex-sdk
+```
+
+```ts
+import { Codex } from "@openai/codex-sdk";
+
+const codex = new Codex();
+const thread = codex.startThread();
+
+const first = await thread.run("检查仓库结构，给出重构计划，先不要改代码");
+console.log(first.finalResponse);
+
+const second = await thread.run("实施计划中的第一步并运行测试");
+console.log(second.finalResponse);
+```
+
+保存 `thread.id` 后，可以在另一个进程中恢复：
+
+```ts
+const resumed = codex.resumeThread(savedThreadId);
+const result = await resumed.run("继续处理上次未完成的测试失败");
+```
+
+#### Python
+
+要求 Python 3.10 或更高版本：
+
+```bash
+pip install openai-codex
+```
+
+```python
+from openai_codex import Codex, Sandbox
+
+with Codex() as codex:
+    thread = codex.thread_start(sandbox=Sandbox.workspace_write)
+    result = thread.run("为当前模块补充单元测试，并运行测试验证")
+    print(result.final_response)
+```
+
+Python 异步程序可使用 `AsyncCodex`。沙箱常用预设是 `read_only`、`workspace_write` 和 `full_access`；优先选择能完成任务的最小权限。一次 `run` 指定的沙箱会应用到该次及后续轮次。详见 [Codex SDK](https://learn.chatgpt.com/docs/codex-sdk)。
+
+### 6. App Server：开发自己的 Codex 客户端
+
+App Server 面向需要完整客户端体验的开发者，它提供认证、历史会话、审批、流式事件等底层能力。如果只是后台自动化或 CI，优先使用 SDK，不必承担协议和界面状态管理成本。
+
+通信方式：
+
+- 默认：通过 `stdio` 传输一行一个 JSON 消息。
+- Unix socket：适合同机进程通信。
+- WebSocket：目前是实验能力，不应默认用于生产关键链路。
+
+协议生命周期：
+
+```text
+客户端连接
+   ↓
+initialize → initialized
+   ↓
+thread/start（或 resume / fork）
+   ↓
+turn/start
+   ↓
+持续接收 item 事件、审批请求和增量输出
+   ↓
+turn/completed
+```
+
+生成与当前版本匹配的类型和 Schema：
+
+```bash
+codex app-server generate-ts --out ./schemas
+codex app-server generate-json-schema --out ./schemas
+```
+
+调试远程 TUI：
+
+```bash
+codex app-server --listen ws://127.0.0.1:4500
+codex --remote ws://127.0.0.1:4500
+```
+
+明文 `ws://` 只应用于本机或 SSH 转发；跨机器部署必须设计认证并使用 TLS（`wss://`）。客户端需要处理 thread、turn、item 三类核心对象，以及审批、错误、断线恢复和版本兼容。实验 API 必须显式声明能力；没有明确需求时只使用稳定接口。详见 [App Server](https://learn.chatgpt.com/docs/app-server)。
+
+### 7. Codex MCP Server：把 Codex 交给其他 Agent 调用
+
+这里的方向很重要：普通 MCP 配置是“Codex 调用外部工具”；`codex mcp-server` 则是“Codex 自己作为 MCP 工具，被另一个 Agent 调用”。
+
+```text
+普通 MCP：       Codex ──调用──> GitHub / Linear / 数据库
+
+Codex MCP Server：主管 Agent ──调用──> Codex ──修改代码/运行测试
+```
+
+启动与检查：
+
+```bash
+codex mcp-server
+npx @modelcontextprotocol/inspector codex mcp-server
+```
+
+它主要暴露两个工具：
+
+| 工具 | 用途 | 关键参数 |
+|---|---|---|
+| `codex` | 创建新的 Codex 任务线程 | 必填 `prompt`；可传 `cwd`、`model`、`sandbox`、`approval-policy` 等 |
+| `codex-reply` | 继续已有线程 | 必填 `threadId` 和 `prompt` |
+
+第一次调用后保存返回的 `structuredContent.threadId`，后续用它继续上下文：
+
+```text
+调用 codex(prompt="分析支付模块", cwd="/repo")
+                │
+                └─ 返回 threadId
+                         │
+调用 codex-reply(threadId=..., prompt="现在补测试并修复问题")
+```
+
+Python Agents SDK 连接概念示例：
+
+```python
+from agents.mcp import MCPServerStdio
+
+async with MCPServerStdio(
+    name="Codex CLI",
+    params={"command": "codex", "args": ["mcp-server"]},
+    client_session_timeout_seconds=360000,
+) as codex_server:
+    # 把 codex_server 传给负责总体编排的 Agent
+    ...
+```
+
+它适用于 Codex 只是复杂系统中的“编码专家”的场景。若你的应用只需要直接发起 Codex 线程，SDK 通常更简单。详见 [Codex MCP Server](https://learn.chatgpt.com/docs/mcp-server)。
+
+### 8. GitHub Action：让 Codex 进入 CI/CD
+
+官方 Action 是 `openai/codex-action@v1`。它负责安装 Codex CLI，并在提供 API Key 时通过代理运行 `codex exec`。
+
+一个最小的只读 PR 审查工作流：
+
+```yaml
+name: Codex PR review
+
+on:
+  pull_request:
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - id: codex
+        uses: openai/codex-action@v1
+        with:
+          openai-api-key: ${{ secrets.OPENAI_API_KEY }}
+          prompt-file: .github/codex/review.md
+          sandbox: read-only
+```
+
+`.github/codex/review.md` 可以写：
+
+```md
+审查本次 PR。优先报告会导致安全问题、数据错误、崩溃或兼容性破坏的问题。
+每个发现必须给出文件位置、触发方式、影响和最小修复建议。
+如果没有实质问题，明确输出“未发现阻断问题”。不要修改代码。
+```
+
+常用输入：
+
+| 输入 | 作用 |
+|---|---|
+| `prompt` / `prompt-file` | 二选一，定义任务 |
+| `codex-args` | 追加 CLI 参数 |
+| `model` / `effort` | 选择模型和推理强度 |
+| `sandbox` | 定义文件系统权限 |
+| `output-file` | 保存最终消息 |
+| `codex-version` | 固定 CLI 版本，提高可重复性 |
+
+Action 的 `final-message` 输出可以交给后续步骤发布评论；发布 PR 评论需要单独配置写权限。对来自 fork 或外部贡献者的 PR，要把代码和提示词都视为不受信任输入，避免给 Job 过宽权限。只读沙箱本身不是全部安全措施，还应关闭 checkout 凭证、收紧 GitHub permissions、限制允许触发的用户或 Bot。详见 [GitHub Action](https://learn.chatgpt.com/docs/github-action)。
+
+### 9. GitHub、Slack、Linear 团队集成
+
+#### GitHub
+
+完成 Codex cloud、GitHub 仓库和 Code review 设置后，可在 PR 中使用：
+
+```text
+@codex review
+@codex security review
+@codex fix the P1 issue
+```
+
+还可以开启自动审查。项目专属标准继续放在 `AGENTS.md` 的 `## Code Review Rules` 中。见 [GitHub integration](https://learn.chatgpt.com/docs/third-party/github)。
+
+#### Slack
+
+先配置 Codex cloud、连接 GitHub 与环境，再安装 Slack 应用并邀请 `@Codex`。在频道或线程中提及它并描述任务，Codex 会创建云端任务；必要时在消息里明确仓库和环境，避免自动匹配错误。
+
+```text
+@Codex 请在 acme/api 仓库中定位这个报错，补回归测试并准备一个 PR。
+```
+
+云端任务完成后仍应由人审查 diff 和测试结果。见 [Slack integration](https://learn.chatgpt.com/docs/third-party/slack)。
+
+#### Linear
+
+付费计划可连接云端 Linear 集成，然后把 issue 分配给 Codex，或在评论中 `@Codex`。如果只是希望本地 Codex 读取和更新 Linear，可以添加它的 MCP Server：
+
+```bash
+codex mcp add linear --url https://mcp.linear.app/mcp
+codex mcp login linear
+```
+
+等价配置：
+
+```toml
+[mcp_servers.linear]
+url = "https://mcp.linear.app/mcp"
+```
+
+见 [Linear integration](https://learn.chatgpt.com/docs/third-party/linear)。
+
+### 10. 开发者命令与 IDE 设置
+
+#### 排查配置和运行状态
+
+| 命令 | 什么时候用 |
+|---|---|
+| `/status` | 查看当前模型、目录、权限和会话信息 |
+| `/debug-config` | 查清某个配置最终来自哪个文件或层级 |
+| `codex --strict-config` | 让无效或未知配置直接报错，适合 CI 验证 |
+| `/model` | 临时切换模型和推理强度 |
+| `/permissions` | 调整当前任务的审批与权限 |
+| `/experimental` | 查看或切换实验功能 |
+| `/memories` | 检查当前可用 Memories |
+| `/hooks` | 审查和信任项目 Hooks |
+| `/theme` | 选择或预览终端主题 |
+| `/keymap`、`/vim` | 调整快捷键和 Vim 模式 |
+
+终端补全示例：
+
+```bash
+codex completion zsh
+```
+
+自定义主题可以放在 `$CODEX_HOME/themes` 下的 `.tmTheme` 文件中。`Ctrl+G` 可用 `$VISUAL` 或 `$EDITOR` 打开外部编辑器编辑长提示词。详见 [CLI customization](https://learn.chatgpt.com/docs/cli-customization) 与 [Developer commands](https://learn.chatgpt.com/docs/developer-commands)。
+
+#### IDE 扩展常用设置
+
+这些是 IDE 设置，不是 `config.toml` 属性：
+
+| 设置 | 默认值 | 作用 |
+|---|---:|---|
+| `chatgpt.commentCodeLensEnabled` | `true` | 在代码注释附近显示可执行入口 |
+| `chatgpt.openOnStartup` | `false` | IDE 启动时自动打开 Codex |
+| `chatgpt.followUpQueueMode` | `queue` | 后续消息排队；也可改成 `steer` 立即引导当前任务 |
+| `chatgpt.composerEnterBehavior` | `enter` | 控制 Enter 的发送行为 |
+| `chatgpt.reviewDelivery` | `inline` | 控制审查结果显示在行内还是独立任务 |
+| `chatgpt.localeOverride` | `Auto` | 覆盖界面语言 |
+| `chatgpt.runCodexInWindowsSubsystemForLinux` | `false` | Windows 上改为在 WSL 中运行 Codex |
+| `chatgpt.chat.fontSize` | 未固定 | 调整聊天文字大小 |
+| `chatgpt.chat.editor.fontSize` | 未固定 | 调整输入编辑器字号 |
+
+`chatgpt.cliExecutable` 主要用于 Codex CLI 开发调试，普通用户不应修改。完整列表见 [Developer settings](https://learn.chatgpt.com/docs/developer-settings)。
+
+### 11. 一个完整落地例子：从本地自查到 PR 自动审查
+
+假设目标是：开发者提交前先自查，PR 创建后再自动做一次只读安全审查。
+
+```text
+本地开发
+   ↓
+npm test / npm run lint
+   ↓
+/review 检查未提交改动
+   ↓
+开发者修复并提交
+   ↓
+创建 Pull Request
+   ↓
+GitHub Action 以 read-only 沙箱运行 Codex
+   ↓
+生成结构化审查结果
+   ↓
+人工判断是否合并
+```
+
+实施顺序：
+
+1. 在 `AGENTS.md` 写明测试命令和 `## Code Review Rules`。
+2. 本地用 `/review` 验证规则是否清楚，修正含糊描述。
+3. 把固定提示词放进 `.github/codex/review.md`。
+4. 添加只读的 GitHub Action，并禁用持久化 checkout 凭证。
+5. 先只保存审查产物，不自动改代码、不自动合并。
+6. 观察误报和漏报后再决定是否允许 Action 写入分支或发布评论。
+7. 固定 Codex CLI 版本，升级时在测试 PR 中验证输出和权限。
+
+这个流程的关键不是“让 AI 自动合并”，而是把重复检查自动化，同时保留明确的权限边界和最终人工判断。
+
+### 12. 开发者上线前检查表
+
+- [ ] 已根据目标正确选择 `exec`、SDK、App Server、MCP Server 或 GitHub Action。
+- [ ] 自动化任务使用能完成工作的最小沙箱和最小 GitHub 权限。
+- [ ] 版本、模型、提示词和输出 Schema 已固定或纳入变更管理。
+- [ ] 仓库代码、PR 内容、Issue 和外部网页都按不受信任输入处理。
+- [ ] Secret 没有写入仓库、日志、提示词或长生命周期的 Job 环境。
+- [ ] Hook 已审查、已测试允许与拒绝路径，且不是唯一安全边界。
+- [ ] 云端 setup 与 Agent 阶段的变量、联网和秘密生命周期已验证。
+- [ ] App Server 的客户端能处理审批、错误、断线、恢复和协议升级。
+- [ ] 多轮任务保存了 `threadId`，并明确何时创建新线程。
+- [ ] 自动修改、发布评论、推送分支和合并 PR 都有独立授权。
+- [ ] 最终仍运行项目自己的测试、lint、类型检查和安全扫描。
+
 ## 常见场景速查
 
 | 需求 | 推荐配置 |
@@ -1679,6 +2295,7 @@ Skill 告诉 Codex“按什么步骤完成任务”，MCP 提供“访问哪个�
 ## 官方资料
 
 - [Configuration 总览](https://learn.chatgpt.com/docs/configuration)
+- [Developers 总览](https://learn.chatgpt.com/docs/developers)
 - [Config basics](https://learn.chatgpt.com/docs/config-file/config-basic)
 - [Advanced Configuration](https://learn.chatgpt.com/docs/config-file/config-advanced)
 - [Configuration Reference](https://learn.chatgpt.com/docs/config-file/config-reference)
@@ -1696,5 +2313,21 @@ Skill 告诉 Codex“按什么步骤完成任务”，MCP 提供“访问哪个�
 - [Linux desktop app](https://learn.chatgpt.com/docs/linux/linux-app)
 - [Windows sandbox](https://learn.chatgpt.com/docs/windows/windows-sandbox)
 - [WSL](https://learn.chatgpt.com/docs/windows/wsl)
+- [Code review](https://learn.chatgpt.com/docs/code-review)
+- [Integrated terminal](https://learn.chatgpt.com/docs/integrated-terminal)
+- [Local environments](https://learn.chatgpt.com/docs/environments/local-environment)
+- [Cloud environment](https://learn.chatgpt.com/docs/environments/cloud-environment)
+- [Git worktrees](https://learn.chatgpt.com/docs/environments/git-worktrees)
+- [Hooks](https://learn.chatgpt.com/docs/hooks)
+- [Non-interactive mode](https://learn.chatgpt.com/docs/non-interactive-mode)
+- [Codex SDK](https://learn.chatgpt.com/docs/codex-sdk)
+- [App Server](https://learn.chatgpt.com/docs/app-server)
+- [Codex MCP Server](https://learn.chatgpt.com/docs/mcp-server)
+- [GitHub Action](https://learn.chatgpt.com/docs/github-action)
+- [GitHub integration](https://learn.chatgpt.com/docs/third-party/github)
+- [Slack integration](https://learn.chatgpt.com/docs/third-party/slack)
+- [Linear integration](https://learn.chatgpt.com/docs/third-party/linear)
+- [Developer commands](https://learn.chatgpt.com/docs/developer-commands)
+- [Developer settings](https://learn.chatgpt.com/docs/developer-settings)
 
 > 文档和属性会随 Codex 更新。复制配置前，请以对应官方链接中的当前版本为准。
