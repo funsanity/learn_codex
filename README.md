@@ -2,7 +2,7 @@
 
 > 面向 Codex 新手与开发者：从基础配置、权限与沙箱，到 `AGENTS.md`、Skills、MCP、Hooks、SDK、App Server 和 CI/CD，提供属性说明、操作流程与完整示例。
 >
-> 主入口：[OpenAI 官方 Configuration 文档](https://learn.chatgpt.com/docs/configuration)与 [Developers 文档](https://learn.chatgpt.com/docs/developers)。最后核对：2026-08-20。
+> 内容依据 OpenAI 官方 Configuration 与 Developers 文档整理。最后核对：2026-08-20。
 
 ## 阅读导航
 
@@ -127,7 +127,7 @@ multi_agent = true
 
 ```toml
 [mcp_servers.docs]
-url = "https://example.com/mcp"
+url = "MCP_SERVER_ENDPOINT"
 enabled = true
 ```
 
@@ -328,7 +328,7 @@ ignore_default_excludes = false
 | `instructions` | string | 附加用户指令 |
 | `developer_instructions` | string | 附加开发者级指令；通常更适合用 `AGENTS.md` 管项目规范 |
 
-模型可用值会变化，应从当前客户端或 [Models 文档](https://learn.chatgpt.com/docs/models) 选择，不要长期复制过时模型名。
+模型可用值会变化，应以当前客户端显示的可选模型为准，不要长期复制过时模型名。
 
 ### 审批、沙箱与网络
 
@@ -592,7 +592,7 @@ Provider API Key 的变量名由 `model_providers.<id>.env_key` 自行指定，�
 | History / State | 历史、SQLite、日志目录 | `history.*`、`sqlite_home`、`log_dir` |
 | Managed requirements | 管理员强制许可、模型、功能和来源 | `requirements.toml` 中的 `allowed_*`、`features.*` 等 |
 
-完整、可搜索的键表见 [Configuration Reference](https://learn.chatgpt.com/docs/config-file/config-reference)，概念与示例见 [Advanced Configuration](https://learn.chatgpt.com/docs/config-file/config-advanced)。
+配置项较多时，应结合当前版本的配置参考核对字段名称、类型和可用范围。
 
 ## 五个完整实战：从需求到验证
 
@@ -1033,7 +1033,7 @@ codex --cd services/payments --ask-for-approval never "列出当前生效的指�
 
 5. 把重复犯错、重复评审意见持续沉淀进去。
 
-详细规则见 [Custom instructions with AGENTS.md](https://learn.chatgpt.com/docs/agent-configuration/agents-md)。
+复杂项目应通过目录级 `AGENTS.md` 控制规则的继承和覆盖范围。
 
 ---
 
@@ -1091,7 +1091,7 @@ min_rate_limit_remaining_percent = 25
 | `memories.extract_model` | string；可选 | 覆盖单会话记忆提取使用的模型 |
 | `memories.consolidation_model` | string；可选 | 覆盖全局记忆归并使用的模型 |
 
-详细说明见 [Memories](https://learn.chatgpt.com/docs/customization/memories)。
+Memories 的生成和可用范围可能随客户端版本及账户设置变化。
 
 ---
 
@@ -1184,7 +1184,7 @@ dependencies:
       value: "projectDocs"
       description: "项目文档 MCP Server"
       transport: "streamable_http"
-      url: "https://docs.example.com/mcp"
+      url: "PROJECT_DOCS_MCP_ENDPOINT"
 ```
 
 ### 启用或停用单个 Skill
@@ -1203,7 +1203,7 @@ enabled = false
 | `skills.config[].path` | 路径 | 指向包含定义的 `SKILL.md` |
 | `skills.config[].enabled` | boolean | 启用或禁用该 Skill |
 
-修改后重启 Codex。详细流程见 [Build skills](https://learn.chatgpt.com/docs/build-skills)。
+修改后重启 Codex，并重新触发一次任务验证 Skill 是否被识别。
 
 ### 创建流程
 
@@ -1232,7 +1232,7 @@ Plugin 不是另一种工作流语言。Skill 仍是工作流的创作格式，�
 4. 如插件需要连接器，按提示登录并审查权限。
 5. 新建聊天，明确要求 ChatGPT/Codex 使用该插件。
 
-判断原则：本地编写和仓库专用工作流用 Skill；跨项目分发、组合多个 Skills 或捆绑连接器时用 Plugin。详情见 [Plugins](https://learn.chatgpt.com/docs/plugins)。
+判断原则：本地编写和仓库专用工作流用 Skill；跨项目分发、组合多个 Skills 或捆绑连接器时用 Plugin。
 
 ---
 
@@ -1305,7 +1305,7 @@ env_vars = ["LOCAL_TOKEN", { name = "REMOTE_TOKEN", source = "remote" }]
 
 ```toml
 [mcp_servers.design]
-url = "https://mcp.example.com/mcp"
+url = "DESIGN_MCP_ENDPOINT"
 bearer_token_env_var = "DESIGN_MCP_TOKEN"
 http_headers = { "X-Region" = "cn-east" }
 ```
@@ -1353,7 +1353,7 @@ codex mcp login <server-name>
 
 IDE 扩展流程相同，保存后选择 **Restart extension**。ChatGPT Web 不读取本地 `config.toml`，需通过 Plugin 使用远程 MCP 工具。
 
-详细说明见 [Model Context Protocol](https://learn.chatgpt.com/docs/extend/mcp)。
+具体字段是否可用取决于当前 Codex 与 MCP Server 的协议版本。
 
 ---
 
@@ -1451,7 +1451,7 @@ developer_instructions = """
 """
 ```
 
-如果自定义名称与 `explorer` 等内置 Agent 相同，自定义版本优先。详细说明见 [Subagents](https://learn.chatgpt.com/docs/agent-configuration/subagents)。
+如果自定义名称与 `explorer` 等内置 Agent 相同，自定义版本优先。
 
 ### 操作流程
 
@@ -1513,7 +1513,7 @@ codex execpolicy check --pretty \
 4. 重启 Codex。
 5. 对复合 Shell 命令保持谨慎：Codex 只会在能安全解析简单命令链时逐段检查；包含重定向、变量、通配符或控制流时，会把整段脚本作为单个调用保守匹配。
 
-详见 [Rules](https://learn.chatgpt.com/docs/agent-configuration/rules)。
+Rules 应与沙箱、审批和工程检查共同使用。
 
 ## Speed：速度与成本
 
@@ -1534,7 +1534,7 @@ fast_mode = true
 /fast status
 ```
 
-具体支持模型、倍率、资格与价格容易变化，请始终查看 [Speed](https://learn.chatgpt.com/docs/agent-configuration/speed) 和 [Pricing](https://learn.chatgpt.com/docs/pricing) 当前说明。
+具体支持模型、倍率、资格与价格容易变化，请始终查看 Speed 和 Pricing 当前说明。
 
 ## Record & Replay：把演示变成 Skill
 
@@ -1562,13 +1562,13 @@ Codex 观察必要的窗口与动作
 5. 审查生成的 Skill，补充隐藏偏好、决策点和成功标准。
 6. 新建聊天，调用该 Skill 并提供本次不同的输入。
 
-录制时避免秘密和敏感数据。需要跨团队稳定分发、捆绑多个 Skills 或连接器时，再打包为 Plugin。详见 [Record & Replay](https://learn.chatgpt.com/docs/extend/record-and-replay)。
+录制时避免秘密和敏感数据。需要跨团队稳定分发、捆绑多个 Skills 或连接器时，再打包为 Plugin。
 
 ## Linux 与 Windows
 
 ### Linux 桌面端
 
-Linux 桌面端有独立的安装与更新流程，入口见 [ChatGPT desktop app for Linux](https://learn.chatgpt.com/docs/linux/linux-app)。`config.toml`、Skills、MCP 和 Agent 的核心概念与其他本地 Codex Host 一致。
+Linux 桌面端有独立的安装与更新流程；`config.toml`、Skills、MCP 和 Agent 的核心概念与其他本地 Codex Host 一致。
 
 ### Windows 原生沙箱
 
@@ -1578,7 +1578,7 @@ sandbox = "elevated"       # 官方推荐；可用管理员权限时
 # sandbox = "unelevated"   # 无管理员权限或 elevated 初始化失败时回退
 ```
 
-原生 Windows 运行时应先尝试 `elevated`；私有桌面等高级设置见 [Windows sandbox](https://learn.chatgpt.com/docs/windows/windows-sandbox)。桌面应用安装见 [ChatGPT desktop app for Windows](https://learn.chatgpt.com/docs/windows/windows-app)。
+原生 Windows 运行时应先尝试 `elevated`；无法使用管理员权限或初始化失败时，再回退到 `unelevated`。
 
 ### WSL2
 
@@ -1589,14 +1589,13 @@ wsl --install
 wsl
 ```
 
-进入 WSL 后：
+进入 WSL 并完成 Codex 安装后，可验证命令是否可用：
 
 ```bash
-curl -fsSL https://chatgpt.com/codex/install.sh | sh
-codex
+codex --version
 ```
 
-仓库尽量放在 `~/code/...`，避免 `/mnt/c/...` 的 I/O、符号链接和权限问题。详见 [WSL](https://learn.chatgpt.com/docs/windows/wsl)。
+仓库尽量放在 `~/code/...`，避免 `/mnt/c/...` 的 I/O、符号链接和权限问题。
 
 ## 组合使用：Skill + MCP + Subagents
 
@@ -1626,7 +1625,7 @@ codex
 
 ## Part III：Developers 开发者篇
 
-> 官方入口：[Developers](https://learn.chatgpt.com/docs/developers)。这一篇回答的是：如何把 Codex 从“聊天里的编程助手”升级为开发流程、CI/CD、内部平台和团队工具的一部分。
+> 本篇介绍如何把 Codex 从“聊天里的编程助手”扩展为开发流程、CI/CD、内部平台和团队工具的一部分。
 
 ### 先看选型：我到底应该用哪个入口？
 
@@ -1685,7 +1684,7 @@ codex
 - 某一个提交：适合定位一次提交引入的问题。
 - 自定义审查说明：例如“重点检查鉴权绕过、并发安全和数据库事务”。
 
-Codex 会启动专门的 reviewer，给出按优先级排列、可执行的发现；审查本身不会修改工作区。桌面端和 IDE 还可以选择把结果显示在代码行内，或作为独立任务显示。详细行为见 [Code review](https://learn.chatgpt.com/docs/code-review)。
+Codex 会启动专门的 reviewer，给出按优先级排列、可执行的发现；审查本身不会修改工作区。桌面端和 IDE 还可以选择把结果显示在代码行内，或作为独立任务显示。
 
 一个适合小白直接使用的审查提示词：
 
@@ -1731,7 +1730,7 @@ npm run lint
                        └─ 修复后重新运行同一命令
 ```
 
-常用测试、启动、格式化命令还可以做成 Local Environment 的 Actions，在集成终端中一键运行。详见 [Integrated terminal](https://learn.chatgpt.com/docs/integrated-terminal)。
+常用测试、启动、格式化命令还可以做成 Local Environment 的 Actions，在集成终端中一键运行。
 
 ### 2. 运行环境：Local、Worktree、Cloud 怎么选
 
@@ -1743,7 +1742,7 @@ npm run lint
 
 #### 2.1 Local Environment
 
-Local Environment 是桌面端的本地项目配置。它可以声明新 worktree 创建后需要自动执行的 setup script，也可以提供常用 Actions。配置会生成在项目的 `.codex` 目录中；不含秘密时，可以提交到 Git，让团队共用。详见 [Local environments](https://learn.chatgpt.com/docs/environments/local-environment)。
+Local Environment 是桌面端的本地项目配置。它可以声明新 worktree 创建后需要自动执行的 setup script，也可以提供常用 Actions。配置会生成在项目的 `.codex` 目录中；不含秘密时，可以提交到 Git，让团队共用。
 
 适合放进 setup script 的内容：
 
@@ -1766,7 +1765,7 @@ main 工作区：你正在修线上 Bug
 └─ worktree C：Codex 更新开发文档
 ```
 
-注意：同一个 Git 分支不能同时检出到两个 worktree。Git 忽略的文件默认也不会复制；确实需要 `.env` 等本地文件时可使用 `.worktreeinclude`，但复制秘密文件会扩大泄露面，应只列最少文件。详见 [Git worktrees](https://learn.chatgpt.com/docs/environments/git-worktrees)。
+注意：同一个 Git 分支不能同时检出到两个 worktree。Git 忽略的文件默认也不会复制；确实需要 `.env` 等本地文件时可使用 `.worktreeinclude`，但复制秘密文件会扩大泄露面，应只列最少文件。
 
 #### 2.3 Cloud Environment
 
@@ -1792,7 +1791,7 @@ Codex 修改代码并运行检查
 - 依赖缓存最长可保留约 12 小时；修改 setup、maintenance、环境变量或 Secrets 会使缓存失效。
 - 固定 Node、Python 等运行时版本，避免“昨天能跑、今天镜像升级后失败”。
 
-详见 [Cloud environment](https://learn.chatgpt.com/docs/environments/cloud-environment) 和 [Environment modes](https://learn.chatgpt.com/docs/environments/modes)。
+三种环境的权限、联网和生命周期不同，创建任务前应先确认运行位置。
 
 ### 3. Hooks：在 Agent 循环中插入团队检查
 
@@ -1858,7 +1857,7 @@ Hook 通过标准输入收到 JSON，通过退出码和标准输出返回决定�
 4. 用一条允许的命令和一条应被拒绝的命令分别测试。
 5. 将 Hook 脚本和项目配置一起做代码审查。
 
-多个来源中匹配的 Hooks 都会运行；同一事件的匹配项可能并发执行。`PreToolUse` 能阻止或改写本地工具调用，但不应被当作唯一安全边界；`PostToolUse` 发生在副作用之后，不能撤销已经执行的操作。完整字段和事件见 [Hooks](https://learn.chatgpt.com/docs/hooks)。
+多个来源中匹配的 Hooks 都会运行；同一事件的匹配项可能并发执行。`PreToolUse` 能阻止或改写本地工具调用，但不应被当作唯一安全边界；`PostToolUse` 发生在副作用之后，不能撤销已经执行的操作。
 
 ### 4. `codex exec`：脚本和 CI 的第一选择
 
@@ -1910,7 +1909,7 @@ codex exec \
   "审查当前改动并按指定结构返回结果"
 ```
 
-安全提醒：自动化环境应使用最小沙箱；只有确认目录安全时才用 `--skip-git-repo-check`。`CODEX_API_KEY` 可用于 `codex exec`，但不要把 Secret 设置成运行仓库不受信任代码的整个 Job 的全局环境变量。详见 [Non-interactive mode](https://learn.chatgpt.com/docs/non-interactive-mode)。
+安全提醒：自动化环境应使用最小沙箱；只有确认目录安全时才用 `--skip-git-repo-check`。`CODEX_API_KEY` 可用于 `codex exec`，但不要把 Secret 设置成运行仓库不受信任代码的整个 Job 的全局环境变量。
 
 ### 5. Codex SDK：把 Codex 放进自己的程序
 
@@ -1961,7 +1960,7 @@ with Codex() as codex:
     print(result.final_response)
 ```
 
-Python 异步程序可使用 `AsyncCodex`。沙箱常用预设是 `read_only`、`workspace_write` 和 `full_access`；优先选择能完成任务的最小权限。一次 `run` 指定的沙箱会应用到该次及后续轮次。详见 [Codex SDK](https://learn.chatgpt.com/docs/codex-sdk)。
+Python 异步程序可使用 `AsyncCodex`。沙箱常用预设是 `read_only`、`workspace_write` 和 `full_access`；优先选择能完成任务的最小权限。一次 `run` 指定的沙箱会应用到该次及后续轮次。
 
 ### 6. App Server：开发自己的 Codex 客户端
 
@@ -1999,11 +1998,11 @@ codex app-server generate-json-schema --out ./schemas
 调试远程 TUI：
 
 ```bash
-codex app-server --listen ws://127.0.0.1:4500
-codex --remote ws://127.0.0.1:4500
+codex app-server --listen LOCAL_APP_SERVER_ENDPOINT
+codex --remote LOCAL_APP_SERVER_ENDPOINT
 ```
 
-明文 `ws://` 只应用于本机或 SSH 转发；跨机器部署必须设计认证并使用 TLS（`wss://`）。客户端需要处理 thread、turn、item 三类核心对象，以及审批、错误、断线恢复和版本兼容。实验 API 必须显式声明能力；没有明确需求时只使用稳定接口。详见 [App Server](https://learn.chatgpt.com/docs/app-server)。
+明文 WebSocket 只应用于本机或 SSH 转发；跨机器部署必须设计认证并使用 TLS 加密 WebSocket。客户端需要处理 thread、turn、item 三类核心对象，以及审批、错误、断线恢复和版本兼容。实验 API 必须显式声明能力；没有明确需求时只使用稳定接口。
 
 ### 7. Codex MCP Server：把 Codex 交给其他 Agent 调用
 
@@ -2053,7 +2052,7 @@ async with MCPServerStdio(
     ...
 ```
 
-它适用于 Codex 只是复杂系统中的“编码专家”的场景。若你的应用只需要直接发起 Codex 线程，SDK 通常更简单。详见 [Codex MCP Server](https://learn.chatgpt.com/docs/mcp-server)。
+它适用于 Codex 只是复杂系统中的“编码专家”的场景。若应用只需要直接发起 Codex 线程，SDK 通常更简单。
 
 ### 8. GitHub Action：让 Codex 进入 CI/CD
 
@@ -2104,7 +2103,7 @@ jobs:
 | `output-file` | 保存最终消息 |
 | `codex-version` | 固定 CLI 版本，提高可重复性 |
 
-Action 的 `final-message` 输出可以交给后续步骤发布评论；发布 PR 评论需要单独配置写权限。对来自 fork 或外部贡献者的 PR，要把代码和提示词都视为不受信任输入，避免给 Job 过宽权限。只读沙箱本身不是全部安全措施，还应关闭 checkout 凭证、收紧 GitHub permissions、限制允许触发的用户或 Bot。详见 [GitHub Action](https://learn.chatgpt.com/docs/github-action)。
+Action 的 `final-message` 输出可以交给后续步骤发布评论；发布 PR 评论需要单独配置写权限。对来自 fork 或外部贡献者的 PR，要把代码和提示词都视为不受信任输入，避免给 Job 过宽权限。只读沙箱本身不是全部安全措施，还应关闭 checkout 凭证、收紧 GitHub permissions、限制允许触发的用户或 Bot。
 
 ### 9. GitHub、Slack、Linear 团队集成
 
@@ -2118,7 +2117,7 @@ Action 的 `final-message` 输出可以交给后续步骤发布评论；发布 P
 @codex fix the P1 issue
 ```
 
-还可以开启自动审查。项目专属标准继续放在 `AGENTS.md` 的 `## Code Review Rules` 中。见 [GitHub integration](https://learn.chatgpt.com/docs/third-party/github)。
+还可以开启自动审查。项目专属标准继续放在 `AGENTS.md` 的 `## Code Review Rules` 中。
 
 #### Slack
 
@@ -2128,14 +2127,14 @@ Action 的 `final-message` 输出可以交给后续步骤发布评论；发布 P
 @Codex 请在 acme/api 仓库中定位这个报错，补回归测试并准备一个 PR。
 ```
 
-云端任务完成后仍应由人审查 diff 和测试结果。见 [Slack integration](https://learn.chatgpt.com/docs/third-party/slack)。
+云端任务完成后仍应由人审查 diff 和测试结果。
 
 #### Linear
 
 付费计划可连接云端 Linear 集成，然后把 issue 分配给 Codex，或在评论中 `@Codex`。如果只是希望本地 Codex 读取和更新 Linear，可以添加它的 MCP Server：
 
 ```bash
-codex mcp add linear --url https://mcp.linear.app/mcp
+codex mcp add linear --url LINEAR_MCP_ENDPOINT
 codex mcp login linear
 ```
 
@@ -2143,10 +2142,8 @@ codex mcp login linear
 
 ```toml
 [mcp_servers.linear]
-url = "https://mcp.linear.app/mcp"
+url = "LINEAR_MCP_ENDPOINT"
 ```
-
-见 [Linear integration](https://learn.chatgpt.com/docs/third-party/linear)。
 
 ### 10. 开发者命令与 IDE 设置
 
@@ -2171,7 +2168,7 @@ url = "https://mcp.linear.app/mcp"
 codex completion zsh
 ```
 
-自定义主题可以放在 `$CODEX_HOME/themes` 下的 `.tmTheme` 文件中。`Ctrl+G` 可用 `$VISUAL` 或 `$EDITOR` 打开外部编辑器编辑长提示词。详见 [CLI customization](https://learn.chatgpt.com/docs/cli-customization) 与 [Developer commands](https://learn.chatgpt.com/docs/developer-commands)。
+自定义主题可以放在 `$CODEX_HOME/themes` 下的 `.tmTheme` 文件中。`Ctrl+G` 可用 `$VISUAL` 或 `$EDITOR` 打开外部编辑器编辑长提示词。
 
 #### IDE 扩展常用设置
 
@@ -2189,7 +2186,7 @@ codex completion zsh
 | `chatgpt.chat.fontSize` | 未固定 | 调整聊天文字大小 |
 | `chatgpt.chat.editor.fontSize` | 未固定 | 调整输入编辑器字号 |
 
-`chatgpt.cliExecutable` 主要用于 Codex CLI 开发调试，普通用户不应修改。完整列表见 [Developer settings](https://learn.chatgpt.com/docs/developer-settings)。
+`chatgpt.cliExecutable` 主要用于 Codex CLI 开发调试，普通用户不应修改。
 
 ### 11. 一个完整落地例子：从本地自查到 PR 自动审查
 
@@ -2292,42 +2289,4 @@ Skill 告诉 Codex“按什么步骤完成任务”，MCP 提供“访问哪个�
 
 不是。只有能独立并行的任务才容易提速；依赖关系强或同时写相同文件时，协调和冲突成本可能更高，而且会消耗更多 Token。
 
-## 官方资料
-
-- [Configuration 总览](https://learn.chatgpt.com/docs/configuration)
-- [Developers 总览](https://learn.chatgpt.com/docs/developers)
-- [Config basics](https://learn.chatgpt.com/docs/config-file/config-basic)
-- [Advanced Configuration](https://learn.chatgpt.com/docs/config-file/config-advanced)
-- [Configuration Reference](https://learn.chatgpt.com/docs/config-file/config-reference)
-- [Environment variables](https://learn.chatgpt.com/docs/config-file/environment-variables)
-- [Customization 总览](https://learn.chatgpt.com/docs/customization/overview)
-- [AGENTS.md](https://learn.chatgpt.com/docs/agent-configuration/agents-md)
-- [Memories](https://learn.chatgpt.com/docs/customization/memories)
-- [Build skills](https://learn.chatgpt.com/docs/build-skills)
-- [Plugins](https://learn.chatgpt.com/docs/plugins)
-- [Model Context Protocol](https://learn.chatgpt.com/docs/extend/mcp)
-- [Subagents](https://learn.chatgpt.com/docs/agent-configuration/subagents)
-- [Rules](https://learn.chatgpt.com/docs/agent-configuration/rules)
-- [Speed](https://learn.chatgpt.com/docs/agent-configuration/speed)
-- [Record & Replay](https://learn.chatgpt.com/docs/extend/record-and-replay)
-- [Linux desktop app](https://learn.chatgpt.com/docs/linux/linux-app)
-- [Windows sandbox](https://learn.chatgpt.com/docs/windows/windows-sandbox)
-- [WSL](https://learn.chatgpt.com/docs/windows/wsl)
-- [Code review](https://learn.chatgpt.com/docs/code-review)
-- [Integrated terminal](https://learn.chatgpt.com/docs/integrated-terminal)
-- [Local environments](https://learn.chatgpt.com/docs/environments/local-environment)
-- [Cloud environment](https://learn.chatgpt.com/docs/environments/cloud-environment)
-- [Git worktrees](https://learn.chatgpt.com/docs/environments/git-worktrees)
-- [Hooks](https://learn.chatgpt.com/docs/hooks)
-- [Non-interactive mode](https://learn.chatgpt.com/docs/non-interactive-mode)
-- [Codex SDK](https://learn.chatgpt.com/docs/codex-sdk)
-- [App Server](https://learn.chatgpt.com/docs/app-server)
-- [Codex MCP Server](https://learn.chatgpt.com/docs/mcp-server)
-- [GitHub Action](https://learn.chatgpt.com/docs/github-action)
-- [GitHub integration](https://learn.chatgpt.com/docs/third-party/github)
-- [Slack integration](https://learn.chatgpt.com/docs/third-party/slack)
-- [Linear integration](https://learn.chatgpt.com/docs/third-party/linear)
-- [Developer commands](https://learn.chatgpt.com/docs/developer-commands)
-- [Developer settings](https://learn.chatgpt.com/docs/developer-settings)
-
-> 文档和属性会随 Codex 更新。复制配置前，请以对应官方链接中的当前版本为准。
+> 文档和属性会随 Codex 更新。复制配置前，请以当前客户端和官方文档中的实际版本为准。

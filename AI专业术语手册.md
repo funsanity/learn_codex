@@ -2,23 +2,21 @@
 
 **模型 · Agent · MCP · Skill · RAG · Harness · Loop · Coding · Eval · Governance · AGI**
 
-*2026 实用版｜面向 AI 技术交流、Agent 工程、AI 编程与项目评审*
+*2026 版｜AI 技术交流 · Agent 工程 · AI 编程 · 项目评审*
 
-> **使用方法：先记“术语属于哪一层”，再记“它和相邻概念有什么区别”。专业交流的关键不是堆缩写，而是能准确说出边界、依赖关系、工程取舍和验证方法。**
+**概念框架：** Model（模型能力） → Context（信息范围） → Tool/MCP（执行能力） → Skill（方法与知识） → Harness（运行保障） → Loop（持续迭代） → Eval/Governance（验证与治理）。
 
-**核心心智模型：** Model（模型能力） → Context（给什么信息） → Tool/MCP（能做什么动作） → Skill（会怎么做） → Harness（如何可靠运行） → Loop（如何持续闭环） → Eval/Governance（如何验证与治理）。
+## 16 组核心概念关系
 
-## 一页先懂：最重要的 16 组关系
-
-| 概念关系 | 一句话判断 |
+| 概念关系 | 主要区别 |
 | --- | --- |
-| LLM vs Agent | LLM 是“脑”；Agent 是“脑 + 工具 + 状态 + 循环 + 规则”。 |
+| LLM vs Agent | LLM 提供语言理解与推理能力；Agent 在模型之外增加工具、状态、执行循环和规则。 |
 | Prompt vs Context | Prompt 是指令；Context 是模型本次能看到的全部信息。 |
 | Context vs Memory | Context 是当前输入；Memory 是可持久保存、以后再注入 Context 的信息。 |
 | Tool vs Skill | Tool = 可执行接口；Skill = 完成某类任务的方法包/知识包。 |
 | Plugin vs Tool | Plugin = 宿主扩展方式；一个插件可能提供多个 Tools。 |
 | MCP vs API | API = 软件接口；MCP = AI 客户端连接外部能力的标准协议层。 |
-| Function Calling vs Tool Execution | 模型生成调用意图和参数；宿主程序才真正执行。 |
+| Function Calling vs Tool Execution | 模型生成调用意图和参数，实际执行由宿主程序完成。 |
 | RAG vs Fine-tuning | RAG 运行时取知识；Fine-tuning 改模型权重/行为。 |
 | RAG vs Memory | RAG 解决知识召回；Memory 解决跨步骤/跨会话状态和经验。 |
 | Workflow vs Agent | Workflow 偏固定流程；Agent 偏动态决策。 |
@@ -31,12 +29,12 @@
 
 ## 1. 基础模型与核心概念 Foundation Models & Core Concepts
 
-| **English / Acronym** | **中文** | **专业解释（说人话）** | **专业交流用法/边界** | **★** |
+| **English / Acronym** | **中文** | **定义** | **使用边界** | **★** |
 | --- | --- | --- | --- | --- |
-| AI — Artificial Intelligence | 人工智能 | 让机器完成通常需要人类智能的感知、推理、生成、决策等任务的总称。 | “这是 AI 系统层问题，不只是模型层问题。” | ★ |
-| AGI — Artificial General Intelligence | 通用人工智能 | 能跨领域学习、推理和完成广泛任务的通用智能目标；目前没有统一行业判定标准。 | “AGI 更像能力边界与自主学习能力的组合，而不是单一 benchmark。” | ★ |
+| AI — Artificial Intelligence | 人工智能 | 让机器完成通常需要人类智能的感知、推理、生成、决策等任务的总称。 | AI 系统除模型外，通常还包括数据、工具、运行环境和治理机制。 | ★ |
+| AGI — Artificial General Intelligence | 通用人工智能 | 能跨领域学习、推理和完成广泛任务的通用智能目标；目前没有统一行业判定标准。 | 评估 AGI 不能只依赖单一 benchmark，还需考虑能力范围、迁移能力和自主学习能力。 | ★ |
 | ASI — Artificial Superintelligence | 超级人工智能 | 假设中在多数认知任务上显著超过人类的智能形态。 | 交流时宜标明这是前瞻概念，而非已实现产品。 | ★ |
-| LLM — Large Language Model | 大语言模型 | 以大规模文本/多模态数据训练、能够理解与生成语言的模型。 | “LLM 是 Agent 的推理核心，但 Agent 不等于 LLM。” | ★ |
+| LLM — Large Language Model | 大语言模型 | 以大规模文本或多模态数据训练、能够理解与生成语言的模型。 | LLM 可以作为 Agent 的推理核心，但不包含 Agent 完整的工具、状态和执行机制。 | ★ |
 | Foundation Model | 基础模型 | 在广泛数据上预训练，可适配多个下游任务的大模型。 |  |  |
 | Multimodal Model | 多模态模型 | 同时处理文字、图像、音频、视频等多种模态的模型。 |  |  |
 | VLM — Vision-Language Model | 视觉语言模型 | 联合理解图像与语言的模型，常用于看图、OCR、GUI 理解、视觉问答。 |  |  |
@@ -45,7 +43,7 @@
 | Checkpoint | 模型检查点 | 训练过程中特定时刻保存的模型参数状态。 |  |  |
 | Weights | 模型权重/参数 | 神经网络中通过训练得到的数值参数。 |  |  |
 | Parameters | 参数量 | 模型中可训练参数的数量；参数更多不自动等于更聪明。 |  |  |
-| Active Parameters | 激活参数 | MoE 模型一次前向计算实际参与计算的参数子集。 | “总参数决定容量上限的一部分，激活参数更直接影响单次计算成本。” | ★ |
+| Active Parameters | 激活参数 | MoE 模型一次前向计算实际参与计算的参数子集。 | 总参数与模型容量有关，激活参数更直接影响单次计算成本。 | ★ |
 | Dense Model | 稠密模型 | 每次前向基本使用全部主要参数的模型。 |  |  |
 | MoE — Mixture of Experts | 混合专家模型 | 通过路由器选择部分专家网络参与计算，以更低激活成本扩展总容量。 |  |  |
 | Expert Routing | 专家路由 | MoE 中选择哪些专家处理当前 token 的机制。 |  |  |
@@ -60,7 +58,7 @@
 | DPO — Direct Preference Optimization | 直接偏好优化 | 直接用偏好对数据优化模型，而不显式训练传统奖励模型的一类方法。 |  |  |
 | Distillation | 知识蒸馏 | 用强模型产生的知识/分布训练较小模型，以降低成本或部署难度。 |  |  |
 | Quantization | 量化 | 降低权重/激活数值精度（如 FP16→INT8/INT4）以减少显存和计算。 |  |  |
-| Context Window | 上下文窗口 | 单次模型调用能够处理的输入与输出 token 总容量范围。 | “上下文窗口是容量上限，不等于模型永久记忆。” | ★ |
+| Context Window | 上下文窗口 | 单次模型调用能够处理的输入与输出 token 总容量范围。 | 上下文窗口表示单次处理容量，不等同于持久记忆。 | ★ |
 | Token | 词元 | 模型处理文本的基本离散单位，不等同于中文字符或英文单词。 |  |  |
 | Tokenizer | 分词器 | 把文本编码为 token ID、再解码回文本的组件。 |  |  |
 | Embedding | 向量嵌入 | 把文本、图像等映射成高维向量，用于语义检索、聚类、相似度等。 |  |  |
@@ -80,7 +78,7 @@
 
 ## 2. Prompt、Context 与 Memory 提示词/上下文/记忆
 
-| **English / Acronym** | **中文** | **专业解释（说人话）** | **专业交流用法/边界** | **★** |
+| **English / Acronym** | **中文** | **定义** | **使用边界** | **★** |
 | --- | --- | --- | --- | --- |
 | Prompt | 提示词 | 发送给模型的自然语言或结构化指令。 |  |  |
 | System Prompt | 系统提示词 | 最高优先级的行为、角色、规则与安全约束之一。 |  |  |
@@ -89,7 +87,7 @@
 | Instruction Hierarchy | 指令层级 | 不同来源指令的优先级与冲突解决机制。 |  |  |
 | Prompt Engineering | 提示词工程 | 通过设计指令、示例、格式和约束提高单次/少数轮输出质量。 |  |  |
 | Context | 上下文 | 当前调用中模型可见的指令、历史、文件、工具定义、检索结果等信息总和。 |  |  |
-| Context Engineering | 上下文工程 | 系统性选择、组织、压缩、注入模型真正需要的信息。 | “Prompt Engineering 关注怎么问；Context Engineering 关注给模型看什么。” | ★ |
+| Context Engineering | 上下文工程 | 系统性选择、组织、压缩并注入与任务相关的信息。 | Prompt Engineering 侧重指令设计，Context Engineering 侧重模型可见信息的选择与组织。 | ★ |
 | Context Management | 上下文管理 | 控制历史保留、摘要、检索、裁剪、优先级与 token 预算。 |  |  |
 | Context Packing | 上下文装配 | 把任务相关文档、规则、示例、工具说明组织进有限上下文。 |  |  |
 | Context Compression | 上下文压缩 | 对历史/工具输出进行摘要、去重或结构化以降低 token 消耗。 |  |  |
@@ -100,7 +98,7 @@
 | Few-shot Prompting | 少样本提示 | 在提示中给少量示例，让模型模仿任务格式/规律。 |  |  |
 | Zero-shot Prompting | 零样本提示 | 不提供示例，仅凭任务描述完成任务。 |  |  |
 | In-context Learning | 上下文学习 | 模型利用当前上下文中的示例/规律临时适配，而不更新模型权重。 |  |  |
-| CoT — Chain of Thought | 思维链 | 将复杂问题拆成多步推理过程的能力/方法。 | 专业交流中不要把“看不到内部推理过程”误解为“模型没有推理”。 | ★ |
+| CoT — Chain of Thought | 思维链 | 将复杂问题拆成多步推理过程的能力或方法。 | 内部推理过程不可见，并不表示模型没有进行推理。 | ★ |
 | Scratchpad | 草稿区/推理草稿 | 供模型或 Agent 临时记录中间状态、计划和计算的工作区概念。 |  |  |
 | Memory | 记忆 | 跨步骤或跨会话保存并可再次调用的信息机制；通常由外部系统实现。 |  |  |
 | Short-term Memory | 短期记忆 | 当前任务/会话内保留的状态和近期信息。 |  |  |
@@ -115,9 +113,9 @@
 
 ## 3. Agent、规划、执行、审核、决策与自治
 
-| **English / Acronym** | **中文** | **专业解释（说人话）** | **专业交流用法/边界** | **★** |
+| **English / Acronym** | **中文** | **定义** | **使用边界** | **★** |
 | --- | --- | --- | --- | --- |
-| Agent / AI Agent | 智能体/代理 | 以模型为核心，能观察环境、规划、调用工具、执行动作并根据结果迭代的系统。 | “Agent = Model + Context + Tools + State + Loop + Guardrails。” | ★ |
+| Agent / AI Agent | 智能体/代理 | 以模型为核心，能观察环境、规划、调用工具、执行动作并根据结果迭代的系统。 | 常见组成包括 Model、Context、Tools、State、Loop 和 Guardrails。 | ★ |
 | Agentic AI | 智能体式 AI | 强调自主执行、工具使用、多步迭代和目标驱动的 AI 系统范式。 |  |  |
 | Agentic Workflow | 智能体工作流 | 含一个或多个 Agent 的任务流，可能部分固定、部分由模型动态决策。 |  |  |
 | Workflow | 工作流 | 按预定义步骤流转的过程；可以完全没有 Agent。 | Agent 强调动态决策；Workflow 强调流程编排。 | ★ |
@@ -158,23 +156,23 @@
 
 ## 4. Tool、Function Calling、MCP、Skill、Plugin 与常用集成
 
-| **English / Acronym** | **中文** | **专业解释（说人话）** | **专业交流用法/边界** | **★** |
+| **English / Acronym** | **中文** | **定义** | **使用边界** | **★** |
 | --- | --- | --- | --- | --- |
 | Tool | 工具 | 模型/Agent 可调用的外部能力，如搜索、Shell、文件、数据库、浏览器。 |  |  |
 | Tool Use | 工具使用 | 模型根据任务选择并调用外部工具完成动作或获取实时数据。 |  |  |
 | Tool Call | 工具调用 | 一次具体的工具请求，通常包含工具名与结构化参数。 |  |  |
-| Function Calling | 函数调用 | 模型输出结构化函数名和参数，由宿主程序真正执行函数/接口。 | Function Calling 不是“模型直接运行 API”；模型负责选择/填参，宿主负责执行。 | ★ |
+| Function Calling | 函数调用 | 模型输出结构化函数名和参数，由宿主程序执行相应函数或接口。 | 模型负责选择函数和生成参数，宿主程序负责权限检查与实际执行。 | ★ |
 | Structured Output | 结构化输出 | 约束模型输出 JSON/Schema 等可机器解析格式。 |  |  |
 | JSON Schema | JSON 模式 | 描述结构化参数字段、类型、必填项等的规范，常用于 Tool/Function Calling。 |  |  |
-| MCP — Model Context Protocol | 模型上下文协议 | 连接 AI 应用与外部数据、工具、工作流的开放标准。 | 可以理解为 AI 工具生态的“统一接口层”，但不是所有 Tool 都必须通过 MCP。 | ★ |
+| MCP — Model Context Protocol | 模型上下文协议 | 连接 AI 应用与外部数据、工具、工作流的开放标准。 | MCP 提供标准化接入层，但工具并非必须通过 MCP 暴露。 | ★ |
 | MCP Host | MCP 宿主 | 承载 AI 应用并发起 MCP 连接的应用，如 AI IDE/助手。 |  |  |
 | MCP Client | MCP 客户端 | 宿主内部连接 MCP Server、处理协议通信的组件。 |  |  |
 | MCP Server | MCP 服务器 | 通过 MCP 暴露 Tools、Resources、Prompts 等能力的服务。 |  |  |
 | MCP Tool | MCP 工具 | MCP Server 向模型暴露的可执行能力。 |  |  |
 | MCP Resource | MCP 资源 | MCP 提供的可读取上下文数据，如文件、数据库内容。 |  |  |
 | MCP Prompt | MCP 提示模板 | MCP Server 暴露的预定义交互模板。 |  |  |
-| Skill / Agent Skill | 技能 | 把特定领域的指令、脚本、资源打包成可发现、可加载的专业能力模块。 | Skill 通常更像“方法与知识包”；Tool 更像“可执行能力”。 | ★ |
-| Plugin | 插件 | 扩展宿主应用能力的安装式集成概念；不同产品对 Plugin 的定义并不统一。 | 不要把所有 MCP Server、Tool、Skill 都笼统叫插件。 | ★ |
+| Skill / Agent Skill | 技能 | 把特定领域的指令、脚本、资源打包成可发现、可加载的专业能力模块。 | Skill 侧重方法与知识的组织，Tool 侧重可执行接口。 | ★ |
+| Plugin | 插件 | 扩展宿主应用能力的安装式集成概念；不同产品对 Plugin 的定义并不统一。 | MCP Server、Tool 和 Skill 各有独立含义，不宜统一称为插件。 | ★ |
 | Connector | 连接器 | 连接外部 SaaS、数据源或企业系统的集成组件。 |  |  |
 | API — Application Programming Interface | 应用程序接口 | 软件之间交换数据和调用能力的接口。 |  |  |
 | SDK — Software Development Kit | 软件开发工具包 | 封装 API、类型、鉴权和常用功能的开发库。 |  |  |
@@ -206,9 +204,9 @@
 
 ## 5. RAG、检索、知识库与数据层
 
-| **English / Acronym** | **中文** | **专业解释（说人话）** | **专业交流用法/边界** | **★** |
+| **English / Acronym** | **中文** | **定义** | **使用边界** | **★** |
 | --- | --- | --- | --- | --- |
-| RAG — Retrieval-Augmented Generation | 检索增强生成 | 先从外部知识库检索相关信息，再把结果作为上下文交给生成模型。 | RAG 解决“临时取知识”；Memory 解决“保存并复用状态/经验”，二者可组合。 | ★ |
+| RAG — Retrieval-Augmented Generation | 检索增强生成 | 从外部知识库检索相关信息，再将结果作为上下文交给生成模型。 | RAG 侧重运行时知识检索，Memory 侧重状态或经验的保存与复用，二者可以组合。 | ★ |
 | Retriever | 检索器 | 根据查询从知识库中召回相关文档/片段。 |  |  |
 | Index | 索引 | 为加速检索建立的数据结构，如倒排索引、向量索引。 |  |  |
 | Chunking | 分块 | 把长文档切成适合 embedding 和检索的片段。 |  |  |
@@ -235,11 +233,11 @@
 
 ## 6. Harness Engineering、Loop Engineering 与 Agent 工程
 
-| **English / Acronym** | **中文** | **专业解释（说人话）** | **专业交流用法/边界** | **★** |
+| **English / Acronym** | **中文** | **定义** | **使用边界** | **★** |
 | --- | --- | --- | --- | --- |
-| Harness | Agent 执行支架/运行框架 | 包围模型的执行环境：提示、上下文、工具、权限、日志、测试、状态、规则等。 | “模型决定能力上限，Harness 决定能力能不能稳定落地。” | ★ |
+| Harness | Agent 执行支架/运行框架 | 包围模型的执行环境，包括提示、上下文、工具、权限、日志、测试、状态和规则。 | 模型能力需要通过 Harness 的工程约束才能稳定用于实际任务。 | ★ |
 | Harness Engineering | Harness 工程/智能体支架工程 | 系统设计 Agent 的上下文、工具、权限、测试、状态、观测和运行环境，使单次 Agent 会话可靠。 |  |  |
-| Loop | 循环 | 围绕目标反复执行“行动→观察→评估→调整”的迭代过程。 |  |  |
+| Loop | 循环 | 围绕目标反复执行行动、观察、评估和调整的迭代过程。 |  |  |
 | Agent Loop | 智能体循环 | Agent 为完成目标不断感知、推理、调用工具、验证、修正的内循环。 |  |  |
 | Loop Engineering | 循环工程 | 设计让 Agent 自动反复运行的外层系统：目标、触发、验证、重试、停止、状态与人类升级机制。 | 2026 年快速流行的新术语；可理解为 Prompt→Context→Harness 之后更上层的自动闭环工程。 | ★ |
 | Outer Loop | 外循环 | 调度完整 Agent 运行、验证结果、持久化状态并决定是否开启下一轮的系统。 |  |  |
@@ -267,11 +265,11 @@
 
 ## 7. AI Coding、Vibe Coding 与工程化开发术语
 
-| **English / Acronym** | **中文** | **专业解释（说人话）** | **专业交流用法/边界** | **★** |
+| **English / Acronym** | **中文** | **定义** | **使用边界** | **★** |
 | --- | --- | --- | --- | --- |
 | AI Coding | AI 辅助编程 | 使用 LLM/Agent 生成、修改、解释、测试和审查代码。 |  |  |
 | Coding Agent | 编程智能体 | 能读取仓库、修改代码、运行命令/测试、迭代修复的 Agent。 |  |  |
-| Vibe Coding | 氛围编程/凭感觉编程 | 主要以自然语言描述意图，让 AI 大量生成代码，人更关注结果而非逐行实现的开发方式。 | 专业场合可说：“Vibe Coding 适合原型，但生产工程需要 Harness、测试、审查和可维护性约束。” | ★ |
+| Vibe Coding | 氛围编程/凭感觉编程 | 主要以自然语言描述意图，由 AI 生成大量代码，人更关注结果而非逐行实现的开发方式。 | 适合快速原型；生产代码仍需要规范、测试、审查和可维护性约束。 | ★ |
 | Spec-driven Development | 规格驱动开发 | 先形成明确需求、验收标准和接口契约，再让人/Agent 实现。 |  |  |
 | AI-native Development | AI 原生开发 | 从流程设计之初就把 Agent、自动验证、上下文与工具链作为核心生产方式。 |  |  |
 | Repo-level Agent | 仓库级 Agent | 能够理解并跨多个文件/模块修改完整代码仓库的 Agent。 |  |  |
@@ -305,16 +303,16 @@
 | Eval / Evaluation | 评测 | 系统化评价模型/Agent 的正确性、稳定性、安全性、成本等。 |  |  |
 | Eval Harness | 评测框架 | 自动运行测试集、收集结果、评分和生成报告的系统。 |  |  |
 | Pass@k | k 次通过率指标 | 生成 k 个候选时至少一个正确的概率，常见于代码评测。 |  |  |
-| RCA — Root Cause Analysis | 根因分析 | 从表面故障追到真正原因，并提出防止复发的措施。 | Agent RCA 不只是“修 bug”，还要解释触发条件、根因、修复、验证和预防。 | ★ |
+| RCA — Root Cause Analysis | 根因分析 | 从表面故障追溯根本原因，并提出防止复发的措施。 | 完整 RCA 应包含触发条件、根因、修复、验证和预防措施。 | ★ |
 | Postmortem | 事故复盘 | 对故障过程、影响、根因、改进措施进行结构化总结。 |  |  |
 | Acceptance Criteria | 验收标准 | 任务完成必须满足的可验证条件。 |  |  |
-| Definition of Done — DoD | 完成定义 | 团队统一认定“真正完成”需要满足的一组质量门槛。 |  |  |
+| Definition of Done — DoD | 完成定义 | 团队用于判断任务完成状态的一组统一质量门槛。 |  |  |
 | Green / Test Green | 测试全绿 | 所有要求的自动化检查均通过。 |  |  |
 | Red-Green-Refactor | 红-绿-重构 | TDD 循环：先失败测试，再实现通过，再重构。 |  |  |
 
 ## 8. 评测、可靠性、安全、治理与企业术语
 
-| **English / Acronym** | **中文** | **专业解释（说人话）** | **专业交流用法/边界** | **★** |
+| **English / Acronym** | **中文** | **定义** | **使用边界** | **★** |
 | --- | --- | --- | --- | --- |
 | Reliability | 可靠性 | 系统在重复任务、异常条件和长期运行下稳定完成目标的能力。 |  |  |
 | Robustness | 鲁棒性 | 面对噪声、变化输入、工具失败时仍保持合理表现。 |  |  |
@@ -352,7 +350,7 @@
 
 ## 9. 推理、训练与高级技术黑话
 
-| **English / Acronym** | **中文** | **专业解释（说人话）** | **专业交流用法/边界** | **★** |
+| **English / Acronym** | **中文** | **定义** | **使用边界** | **★** |
 | --- | --- | --- | --- | --- |
 | Inference-time Compute | 推理时计算 | 在回答阶段投入更多计算/迭代以换取更高推理质量。 |  |  |
 | Test-time Compute / TTC | 测试时计算 | 广义上指推理/测试阶段额外计算，如多采样、搜索、验证。 |  |  |
@@ -387,9 +385,9 @@
 
 ## 10. 行业常见产品/框架/模型命名与易误用词
 
-| **English / Acronym** | **中文** | **专业解释（说人话）** | **专业交流用法/边界** | **★** |
+| **English / Acronym** | **中文** | **定义** | **使用边界** | **★** |
 | --- | --- | --- | --- | --- |
-| Sol | Sol（产品/模型档位名） | 某些 AI 产品中用于区分模型/推理配置的命名；不是全行业统一技术术语。 | 交流时应补全厂商与版本，例如“GPT-5.6 Sol”，避免只说 Sol。 | ★ |
+| Sol | Sol（产品/模型档位名） | 某些 AI 产品中用于区分模型或推理配置的命名；不是全行业统一技术术语。 | 单独使用时含义不明确，通常需要同时注明厂商和版本，例如 GPT-5.6 Sol。 | ★ |
 | Terra / Luna | Terra / Luna（产品/模型档位名） | 与 Sol 类似，属于具体产品体系内的模型/能力档位命名时，应以对应厂商文档为准。 |  |  |
 | Model Tier | 模型档位 | 同一产品内按能力、速度、成本区分的模型层级。 |  |  |
 | Reasoning Tier | 推理档位 | 同一模型使用不同推理预算/强度的配置。 |  |  |
@@ -401,26 +399,26 @@
 | RAG vs Memory | RAG vs 记忆 | RAG 检索知识；Memory 保存并恢复任务/用户/经验状态。 |  |  |
 | Context vs Memory | 上下文 vs 记忆 | Context 是这次调用模型可见内容；Memory 是可持久化并在需要时重新注入 Context 的信息。 |  |  |
 | KV Cache vs Prompt Cache | KV Cache vs 提示缓存 | KV Cache 是 Transformer 推理计算缓存；Prompt/Prefix Cache 是产品层对重复前缀计算的复用机制。 |  |  |
-| Function Calling vs API Call | 函数调用 vs API 调用 | Function Calling 通常是模型生成结构化调用意图；真正 API 请求由宿主程序执行。 |  |  |
-| Langchat Tool | “Langchat Tool”（常见误写） | 行业主流通常是 LangChain Tool。若你看到“Langchat”，需确认对方是否指某个具体产品或只是拼写错误。 |  |  |
-| Kappay / Kappa | Kappay / Kappa（需确认语境） | “kappay”不是当前主流通用 AI 术语。Kappa 可能指 Kappa Architecture（流式数据架构）、某项目名或内部代号。 | 专业交流中不要不加语境直接使用，先确认来源。 | ★ |
+| Function Calling vs API Call | 函数调用 vs API 调用 | Function Calling 通常由模型生成结构化调用意图，实际 API 请求由宿主程序执行。 |  |  |
+| Langchat Tool | Langchat Tool（常见误写） | 行业中更常见的名称是 LangChain Tool；Langchat 也可能是特定产品名或拼写错误。 | 使用前需结合来源确认具体含义。 |  |
+| Kappay / Kappa | Kappay / Kappa（需确认语境） | Kappay 不是通用 AI 术语；Kappa 可能指 Kappa Architecture、项目名称或内部代号。 | 缺少上下文时无法确定其具体含义。 | ★ |
 | RCA | 根因分析 | 不是 AI 专属词，但在 Agent 工程里非常常见，用来要求 Agent 不只修复表象，还要给根因证据。 |  |  |
 
 ## 11. AI 工程发展脉络：从 Prompt 到 Loop
 
-| 阶段 | 中文 | 核心对象 | 一句话问题 | 关键指标 |
+| 阶段 | 中文 | 核心对象 | 关注问题 | 关键指标 |
 | --- | --- | --- | --- | --- |
-| Prompt Engineering | 提示词工程 | 优化一次指令 | “怎么问模型？” | 单轮质量 |
-| Context Engineering | 上下文工程 | 优化模型看到的信息 | “给模型什么？” | 相关性、完整性、token 效率 |
-| RAG / Memory | 检索与记忆 | 补充外部知识和长期状态 | “信息从哪里来、怎么记住？” | 召回、事实性、持续性 |
-| Tool / MCP / Skill | 能力接入 | 让模型能行动并掌握专业方法 | “它能做什么、会怎么做？” | 工具成功率、权限、可组合性 |
-| Harness Engineering | 支架工程 | 让一次 Agent 会话稳定可靠 | “怎样把模型装进可控工程环境？” | 可靠性、测试、日志、权限 |
-| Loop Engineering | 循环工程 | 让 Agent 自动反复完成目标 | “怎样无人盯守仍能持续推进？” | 停止条件、验证、重试、状态、成本 |
-| Agent Factory / AI-native SDLC | AI 原生交付系统 | 多 Agent + Pipeline + Governance | “怎样规模化生产结果？” | 吞吐、质量、成本、审计 |
+| Prompt Engineering | 提示词工程 | 优化一次指令 | 指令的表达与约束 | 单轮质量 |
+| Context Engineering | 上下文工程 | 优化模型看到的信息 | 上下文的选择与组织 | 相关性、完整性、token 效率 |
+| RAG / Memory | 检索与记忆 | 补充外部知识和长期状态 | 信息来源与状态保留 | 召回、事实性、持续性 |
+| Tool / MCP / Skill | 能力接入 | 让模型能行动并掌握专业方法 | 执行能力与方法复用 | 工具成功率、权限、可组合性 |
+| Harness Engineering | 支架工程 | 让一次 Agent 会话稳定可靠 | 模型运行环境的工程约束 | 可靠性、测试、日志、权限 |
+| Loop Engineering | 循环工程 | 让 Agent 自动反复完成目标 | 持续执行、验证与停止机制 | 停止条件、验证、重试、状态、成本 |
+| Agent Factory / AI-native SDLC | AI 原生交付系统 | 多 Agent + Pipeline + Governance | 规模化任务交付 | 吞吐、质量、成本、审计 |
 
-## 12. 梁文锋公开交流中提到的 AGI“阶梯”路线（2026 公开报道整理）
+## 12. 梁文锋公开交流中的 AGI 阶梯路线（2026 年公开报道整理）
 
-**重要说明：**公开报道对“几阶”计数存在两种口径：有的从“语言模型”开始算六阶；有的把语言模型视为前置基础，从 CoT 开始算五阶。核心顺序基本一致。以下按完整六阶表达。
+**口径说明：**公开报道存在两种计数方式：从语言模型开始计算时为六阶；将语言模型视为前置基础、从 CoT 开始计算时为五阶。下表采用六阶口径。
 
 | 阶梯 | English | 中文 | 核心含义 | 阶段判断 |
 | --- | --- | --- | --- | --- |
@@ -428,82 +426,82 @@
 | 2 | CoT — Chain of Thought | 思维链 | 通过推理提升智能上限 | 报道中称前一阶段重点 |
 | 3 | Agent | 智能体 | 从回答问题扩展到调用工具、执行任务 | 2026 年重点；优先 Coding/General Agent |
 | 4 | Continual Learning | 持续学习 | 像员工一样在长期工作中积累经验，而非每次都靠完整上下文 | 被视为关键瓶颈 |
-| 5 | Self-Iteration / AI accelerates AI R&D | 自我迭代 / AI 加速 AI 研发 | AI 参与研发下一代 AI，形成渐进式加速 | 接近“渐进奇点”的概念 |
+| 5 | Self-Iteration / AI accelerates AI R&D | 自我迭代 / AI 加速 AI 研发 | AI 参与研发下一代 AI，形成渐进式加速 | 接近渐进奇点概念 |
 | 6 | Embodied Intelligence | 具身智能 | 把智能扩展到物理世界的感知与行动 | 更后期阶段 |
 
-**专业表达示例：**“按梁文锋 2026 年公开交流的阶梯式判断，Agent 不是终点；真正影响 AI 能否像员工一样长期工作的下一道门槛是 Continual Learning，之后才可能出现 AI 加速 AI 研发的递归改进。”
+按照该阶梯路线，Agent 之后的关键阶段是 Continual Learning，随后是 AI 参与并加速下一代 AI 的研发，最终延伸至具身智能。
 
-## 13. 交流时显得专业的 30 句“高信息密度表达”
+## 13. 工程讨论中的常用表述
 
-01. 这个问题不要只看模型能力，要拆成 Model、Context、Tool、Harness 和 Eval 五层。
+01. AI 系统可以按 Model、Context、Tool、Harness 和 Eval 五个层面进行分析。
 
-02. LLM 是推理核心，Agent 是一个系统，不要把二者当同义词。
+02. LLM 是推理组件，Agent 是包含模型、工具、状态和执行机制的完整系统。
 
-03. 先问有没有可验证的 Done Condition，否则 Agent 很容易“自认为完成”。
+03. 可验证的 Done Condition 是判断 Agent 是否完成任务的基础。
 
-04. 长任务真正难点不是一次生成，而是状态持久化、失败恢复和验证闭环。
+04. 长任务的主要工程难点包括状态持久化、失败恢复和结果验证。
 
-05. 这里更像 Context Engineering 问题，不是再改一版 Prompt 就能根治。
+05. 由信息选择或组织不当引起的问题通常属于 Context Engineering 范畴，仅调整 Prompt 可能无法解决。
 
-06. 如果知识变化快，优先考虑 RAG/Tool Grounding，而不是把所有知识 Fine-tune 进权重。
+06. 对更新频繁的知识，RAG 或 Tool Grounding 通常比将知识写入模型权重更便于维护。
 
-07. Function Calling 只是模型产生结构化调用意图，执行和权限仍在宿主系统。
+07. Function Calling 由模型生成结构化调用意图，权限控制和实际执行仍由宿主系统负责。
 
-08. MCP 解决的是工具/资源接入标准化，不自动解决工具质量、权限和业务语义。
+08. MCP 提供工具和资源的标准化接入方式，但不保证工具质量、权限设计或业务语义正确。
 
-09. Skill 是把领域 SOP、脚本和资源模块化；Tool 是执行动作，两者层次不同。
+09. Skill 用于组织领域流程、脚本和资源，Tool 用于提供可执行接口。
 
-10. 生产级 Agent 的核心不是“能跑”，而是可重复、可验证、可观测、可恢复。
+10. 生产环境中的 Agent 需要具备可重复、可验证、可观测和可恢复等特性。
 
-11. 多 Agent 并不天然更强，先看任务是否真的可拆、通信成本是否值得。
+11. 多 Agent 架构适用于可独立拆分且通信成本可控的任务。
 
-12. Planner 和 Executor 分离的价值，是降低一边执行一边改目标导致的漂移。
+12. Planner 与 Executor 分离有助于减少执行过程中目标变化造成的偏移。
 
-13. Reviewer 最好与 Coder 解耦，否则容易出现同源偏差。
+13. Reviewer 与 Coder 解耦可以降低同源偏差。
 
-14. 能用 deterministic test 验证的，就不要只靠 LLM-as-a-Judge。
+14. 能够使用确定性测试验证的结果，不宜只依赖 LLM-as-a-Judge。
 
-15. Agent 自验证可以作为第一层，但最终还是要有外部 verifier 或真实环境反馈。
+15. Agent 自验证可作为初步检查，最终结果仍需要外部 verifier 或真实环境反馈。
 
-16. 这个失败应该做 RCA：触发条件、根因、修复、回归验证、预防机制都要闭环。
+16. 完整的 RCA 包括触发条件、根因、修复措施、回归验证和预防机制。
 
-17. Worktree 的价值是隔离并行 Agent，避免多个执行器互相覆盖工作区。
+17. Worktree 可隔离并行任务，避免多个 Agent 修改同一工作区。
 
-18. Prompt → Context → Harness → Loop，是近几年 AI 工程关注点逐层上移的一个理解框架。
+18. Prompt、Context、Harness 和 Loop 反映了 AI 工程从指令设计向系统运行机制扩展的过程。
 
-19. Loop Engineering 关注的不只是“再跑一次”，而是何时重试、如何验证、什么时候停止。
+19. Loop Engineering 涵盖重试条件、验证方法、状态管理和停止规则。
 
-20. 自治程度越高，Governance、权限最小化、预算和审计就越重要。
+20. Agent 自治程度提高时，权限控制、预算、审计和治理要求也会相应增加。
 
-21. 别只看 benchmark，要看真实任务成功率、重试率、人工接管率和 cost per task。
+21. 模型评估除 benchmark 外，还应包含任务成功率、重试率、人工接管率和单任务成本。
 
-22. 模型选型应该看 capability/cost/latency 三角，不是永远选最强模型。
+22. 模型选型通常需要综合考虑能力、成本和延迟。
 
-23. 低成本模型做路由和简单执行，高推理模型处理规划、异常和高价值决策，是常见的混合架构。
+23. 混合模型架构可以由低成本模型处理路由和简单任务，由高推理模型处理规划、异常和高价值决策。
 
-24. 缓存命中影响成本和延迟，但“会话变笨”通常还要看上下文装配、摘要和状态恢复。
+24. 会话质量下降可能与上下文装配、摘要和状态恢复有关，不能只根据缓存命中情况判断。
 
-25. KV Cache、Prompt Cache、Memory 是三种完全不同层次的东西。
+25. KV Cache、Prompt Cache 和 Memory 分别属于模型计算、请求复用和状态管理层。
 
-26. Vibe Coding 能提高原型速度，但生产代码需要 Spec、Tests、Review 和维护边界。
+26. Vibe Coding 适合快速原型，生产代码仍需要规范、测试、审查和维护边界。
 
-27. 真正成熟的 AI Coding 不是“让模型写代码”，而是让 Agent 在 CI 和验收标准下完成闭环。
+27. 工程化 AI Coding 通常由 Agent 在 CI 和验收标准约束下完成开发与验证。
 
-28. RAG 的瓶颈很多时候不在生成，而在 chunking、retrieval、rerank 和数据新鲜度。
+28. RAG 的效果通常受 chunking、retrieval、rerank 和数据时效性影响。
 
-29. 如果没有 observability，你很难知道 Agent 是模型能力不足，还是 Tool/Context/Harness 出问题。
+29. Observability 用于区分模型能力、工具、上下文和 Harness 引起的问题。
 
-30. 专业不是缩写多，而是知道每个术语的边界、依赖和什么时候不该用。
+30. 术语的有效使用依赖于明确的定义、适用边界和上下文。
 
-## 14. 关键术语核验来源与备注
+## 14. 关键术语依据与备注
 
-| 主题 | 核验说明 | 来源 |
-| --- | --- | --- |
-| MCP | Model Context Protocol 官方文档：MCP 是连接 AI 应用与外部系统的数据、工具、工作流的开放标准；官方将 Server 能力分为 Prompts、Resources、Tools 等。 | https://modelcontextprotocol.io/docs/getting-started/intro |
-| Agent Skills | Anthropic Engineering（2025-10）：Agent Skills 将 instructions、scripts、resources 组织成可发现、动态加载的专业能力模块。 | https://www.anthropic.com/engineering/equipping-agents-for-the-real-world-with-agent-skills |
-| Function Calling / Tools | OpenAI API 文档：模型可选择 function/custom/MCP/built-in tools，并用 JSON Schema 描述参数。 | https://platform.openai.com/docs |
-| RAG | Lewis et al., 2020, Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks。 | https://arxiv.org/abs/2005.11401 |
-| Loop Engineering | IBM Think（2026-07）：定义为设计 Agentic workflows/loops，使 Agent 能行动、观察、决策、迭代直至完成目标。 | https://www.ibm.com/think/topics/loop-engineering |
-| 梁文锋 AGI 阶梯 | 2026-07 多家媒体对投资者交流会内容的公开整理：核心顺序为语言模型→CoT→Agent→持续学习→自我迭代/AI 加速 AI 研发→具身智能；不同报道对“5 阶/6 阶”计数口径不同。 | 公开报道整理，需以 DeepSeek 后续正式发布原文为最高依据 |
+| 主题 | 依据与说明 |
+| --- | --- |
+| MCP | Model Context Protocol 官方文档将 MCP 定义为连接 AI 应用与外部系统的数据、工具和工作流的开放标准，并将 Server 能力分为 Prompts、Resources、Tools 等。 |
+| Agent Skills | Anthropic Engineering 在 2025 年介绍了 Agent Skills：将 instructions、scripts、resources 组织成可发现、可动态加载的专业能力模块。 |
+| Function Calling / Tools | OpenAI API 文档说明，模型可以选择 function、custom、MCP 和内置工具，并使用 JSON Schema 描述参数。 |
+| RAG | Lewis 等人在 2020 年发表的《Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks》是 RAG 的代表性论文。 |
+| Loop Engineering | IBM Think 在 2026 年将其概括为设计 Agentic workflows 或 loops，使 Agent 能行动、观察、决策并持续迭代，直到满足目标。 |
+| 梁文锋 AGI 阶梯 | 根据 2026 年 7 月多家媒体对投资者交流会内容的公开整理，核心顺序为语言模型→CoT→Agent→持续学习→自我迭代或 AI 加速 AI 研发→具身智能。不同报道对“5 阶/6 阶”的计数口径不同，正式信息应以 DeepSeek 后续发布的原文为准。 |
 
-**版本说明：**AI 行业术语变化很快，尤其是模型档位名、Agent 框架、插件/连接器名称。本文把“稳定通用术语”和“产品特定名称”分开处理；遇到新词时先判断它是行业标准、论文术语、厂商命名，还是社区黑话。
+**版本说明：**AI 行业术语变化较快，尤其是模型档位、Agent 框架及插件或连接器名称。本文区分稳定的通用术语与产品特定名称；新出现的概念可能属于行业标准、论文术语、厂商命名或社区用语。
