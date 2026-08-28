@@ -2,7 +2,7 @@
 
 > 面向 Codex 新手与开发者：从基础配置、权限与沙箱，到 `AGENTS.md`、Skills、MCP、Hooks、SDK、App Server 和 CI/CD，提供属性说明、操作流程与完整示例。
 >
-> 内容依据 OpenAI 官方 Configuration 与 Developers 文档整理。最后核对：2026-08-20。
+> 内容依据 OpenAI 官方 Configuration 与 Developers 文档整理。最后核对：2026-08。
 
 ## 阅读导航
 
