@@ -401,7 +401,7 @@
 | KV Cache vs Prompt Cache | KV Cache vs 提示缓存 | KV Cache 是 Transformer 推理计算缓存；Prompt/Prefix Cache 是产品层对重复前缀计算的复用机制。 |  |  |
 | Function Calling vs API Call | 函数调用 vs API 调用 | Function Calling 通常由模型生成结构化调用意图，实际 API 请求由宿主程序执行。 |  |  |
 | Langchat Tool | Langchat Tool（常见误写） | 行业中更常见的名称是 LangChain Tool；Langchat 也可能是特定产品名或拼写错误。 | 使用前需结合来源确认具体含义。 |  |
-| Kappay / Kappa | Kappay / Kappa（需确认语境） | Kappay 不是通用 AI 术语；Kappa 可能指 Kappa Architecture、项目名称或内部代号。 | 缺少上下文时无法确定其具体含义。 | ★ |
+| Karpathy | Karpathy（Andrej Karpathy） | AI 研究者与工程师；在大模型、自动驾驶、神经网络教育与 AI 编程实践等语境中，常用其姓名指代其观点、课程、方法或相关项目。 | 原写法 “Kappay” 应更正为 “Karpathy”；它是人名，并非 Kappa。 | ★ |
 | RCA | 根因分析 | 不是 AI 专属词，但在 Agent 工程里非常常见，用来要求 Agent 不只修复表象，还要给根因证据。 |  |  |
 
 ## 11. AI 工程发展脉络：从 Prompt 到 Loop
