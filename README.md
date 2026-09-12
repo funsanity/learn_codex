@@ -14,6 +14,7 @@
 - 想让 Codex 更懂项目：阅读 `AGENTS.md`、Memories 和 Skills。
 - 想连接外部系统：阅读 Plugins 与 MCP。
 - 想并行处理任务：阅读 Subagents。
+- 想理解委派、控制权和角色流程：阅读“**Agent 协作：任务委派、控制权与生命周期**”。
 - 想把 Codex 接入代码审查、CI、内部工具或团队协作：阅读“**Part III：Developers 开发者篇**”。
 - 配置不生效：阅读文末“**常见问题**”。
 
@@ -1461,6 +1462,136 @@ developer_instructions = """
 4. 限制并发数，避免资源浪费和写冲突。
 5. 要求主代理等待所有结果，并只汇总证据和结论。
 6. 若多个 Agent 必须写文件，让它们负责互不重叠的文件或目录。
+
+---
+
+## Agent 协作：任务委派、控制权与生命周期
+
+一句话理解：**Spawn 是创建执行者，Dispatch 是派发工作，Delegation 是委托责任，Tool call 是调用能力，Handoff 是交接当前分支的控制权。** 它们属于不同层次，不是五个同义命令。
+
+以下是通用协作模型，不是 Codex 固定内部状态机。Codex 子代理以主线程收集结果的工作流为主；Agents SDK 的 Handoff 则是另一种编排模式，不应直接套成 Codex 的某个同名命令。官方资料见本节末尾。
+
+### 五个术语：工作交出去，谁继续负责？
+
+| 术语 | 含义 | 控制权与返回关系 |
+| --- | --- | --- |
+| `spawn` | 创建子代理或新的执行线程 | 创建本身不等于把最终回复权交出去；是否携带初始任务取决于接口 |
+| `dispatch` | 将任务或消息路由给工具、队列或已有 Agent | 是派发动作，不一定创建 Agent，也不一定改变最终负责人 |
+| `delegation` | 把有边界的子任务委派给其他执行者 | 常见主从模式中，子代理负责局部执行，主代理仍负责集成与交付；广义委派也可通过 Handoff 实现 |
+| `tool call` | Agent 请求运行某项工具能力 | 通常由运行时执行并返回结果，原 Agent 再继续；工具也可以封装另一个 Agent |
+| `handoff` | 将当前对话分支交给另一个 Agent 接管 | 接收方成为当前分支的负责人，不是默认“做完自动回到主代理”；回交需另行设计 |
+
+“控制权”至少分三层：**谁决定下一步、谁负责最终回复、谁有实际操作权限**。Handoff 改变编排负责人，不等于提权；角色叫 `architect` 或 `worker` 也不会自动获得写文件、联网或部署权限。权限由运行环境与审批机制约束。
+
+```text
+A. Tool call: call -> result -> continue
+
+   Agent A --> Runtime / Tool --> result --> Agent A --> User
+
+B. Delegation: manager retains final ownership
+
+   User --> Manager --+--> Worker A --+--> Manager --> User
+                      +--> Worker B --+
+                      |
+                      +--> Manager's own independent work
+
+C. Handoff: specialist takes over this branch
+
+   User --> Agent A --handoff--> Agent B --> User
+                                  |
+                                  +--> further handoff (if configured)
+```
+
+### 角色不是固定流水线，也不一定各开一个 Agent
+
+| 角色 | 主要职责 | 典型交付物 |
+| --- | --- | --- |
+| `manager` / `orchestrator` | 拆任务、管理依赖和预算、收集结果、最终交付 | 任务分配、集成结果、风险说明 |
+| `architect` | 明确方案、接口、约束和验收标准 | 设计与任务边界，不只是大段设想 |
+| `explorer` | 阅读代码、查找调用链、定位事实 | 文件位置、现有行为与证据 |
+| `worker` | 在约定范围内实现或修复 | 补丁、改动文件、验证记录 |
+| `verifier` | 对照验收标准验证结果，检查回归 | 通过/失败结论、复现步骤与日志 |
+| `reviewer` | 审查设计、质量、安全和维护风险 | 按严重度排序的问题及依据 |
+
+这里的 `architect`、`verifier`（不是 `verifer`）、`reviewer`、`manager` 是职责名称，不是在宣称它们都是 Codex 内置角色。可以由主代理兼任，也可以按上一节的方法定义自定义 Agent；简单任务无需凑齐所有角色。
+
+### 从接单到收尾：一个完整逻辑流程
+
+下图是推荐的工程流程，方框表示职责阶段，不保证每个方框都是独立线程。只有互不阻塞的工作才适合并行；验证应针对最终集成产物，不能只相信 Worker 的“已完成”。
+
+```text
+User request
+     |
+     v
+Manager: scope + constraints + budget + acceptance criteria
+     |
+     v
+Architect / Explorer: inspect -> design -> split dependencies
+     |
+     v
+Manager: execute locally OR delegate bounded tasks
+     |
+     +--> Worker A: implement scope A --+
+     +--> Worker B: implement scope B --+  (parallel only if independent)
+     |                                 |
+     +---------------------------------+
+     |
+     v
+Manager: collect evidence -> inspect changes -> integrate
+     |
+     v
+Verifier / Reviewer: test integrated result + assess risks
+     |
+     +-- FAIL --> bounded repair --> integrate --> verify again
+     |
+     +-- BLOCKED / budget exhausted --> report limits / request decision
+     |
+     +-- PASS --> final answer --> close unused agent threads
+```
+
+每个执行者内部还会重复一个较小的循环：
+
+```text
+Context + instructions
+          |
+          v
+    Choose next action <--------------------+
+          |                                |
+          +--> Tool call --> result / error +
+          +--> Need approval --> pause -----+ (resume if approved)
+          +--> Final result --> completed
+          +--> Cannot proceed --> blocked / failed / cancelled
+```
+
+这些是逻辑状态标签，不是某个 API 的枚举定义。暂停等待不等于失败，完成任务不等于线程已关闭；读取上下文、执行、等待、失败处理和资源清理需要分别考虑。
+
+### 一次好的委派，至少说清六件事
+
+1. **目标与验收**：交付什么，怎样判断完成。
+2. **上下文**：相关文件、已知事实、依赖；不要假设子代理自动知道所有聊天内容。
+3. **权限与写入范围**：可以读写什么，哪些操作要审批；并行 Worker 不修改同一组文件。
+4. **输出格式**：结论、补丁路径、测试结果和未解决问题，而不是倾倒全部日志。
+5. **预算与停止条件**：时间、重试次数、遇到阻塞如何上报；避免无限返工。
+6. **回收与交付责任**：由谁集成、谁验证、谁最终答复；不再需要的线程及时关闭。
+
+示例请求（职责分工，不是可执行 API）：
+
+```text
+请使用子代理协作，主代理保留最终交付责任。
+先由主代理检查依赖并确定接口和验收标准。
+将两个互不依赖的模块分给 Worker A/B，分别限定写入目录。
+主代理同时做不重叠的集成准备，不重复子代理的工作。
+收齐结果后检查并集成补丁，再让 Verifier 验证最终产物。
+失败最多返工两轮；仍失败则报告证据与阻塞，不宣称成功。
+最后汇总改动、验证结果和剩余风险，关闭不再使用的线程。
+```
+
+截至 2026-09-08 核对的官方说明：本地 Codex 在用户明确要求，或适用的 `AGENTS.md` / Skill 指令要求委派时使用子代理；具体工具名称和可用性以当前客户端暴露的接口为准，不要把上面的概念词直接当作 CLI 命令。
+
+参考：
+
+- [OpenAI Docs：Subagents](https://developers.openai.com/codex/subagents/)：子代理触发、独立工作与主线程汇总。
+- [OpenAI Docs：Orchestration and handoffs](https://developers.openai.com/api/docs/guides/agents/orchestration)：Agents as tools 保留 Manager 的回复责任，Handoff 将当前分支交给 Specialist。
 
 ---
 
