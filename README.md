@@ -1,5 +1,7 @@
 # Codex 全景指南：配置、自定义与开发者实践
 
+> 🧭 **其他指南**：[Claude Code 全景指南](Claude%20Code%20%E5%85%A8%E6%99%AF%E6%8C%87%E5%8D%97.md) · [Antigravity 全景指南](Antigravity%20%E5%85%A8%E6%99%AF%E6%8C%87%E5%8D%97.md)
+
 > 面向 Codex 新手与开发者：从基础配置、权限与沙箱，到 `AGENTS.md`、Skills、MCP、Hooks、SDK、App Server 和 CI/CD，提供属性说明、操作流程与完整示例。
 >
 > 内容依据 OpenAI 官方 Configuration 与 Developers 文档整理。最后核对：2026-08。
